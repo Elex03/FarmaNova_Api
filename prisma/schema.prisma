@@ -161,8 +161,6 @@ model detallespedidos {
   cantidad           Int
   variante_fk        Int
   pedidos_fk         Int
-  fechacompra        DateTime?    @db.Date
-  estao              String?      @db.VarChar(20)
   precioventa        Float?       @db.Real
   
   variantes          Variante     @relation(fields: [variante_fk], references: [variante_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_medicamentos_fk")

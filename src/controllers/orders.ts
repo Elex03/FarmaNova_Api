@@ -77,14 +77,15 @@ export const getSales = async (_req: Request, res: Response) => {
 export const getOrders = async (_req: Request, res: Response) => {
   const data = await Prismaclient.pedidos.findMany({
     select: {
+      distribuidor: {
+        select: {
+          nombrecompleto: true,
+          empresa: true,
+        },
+      },
       detallespedidos: {
         select: {
-          distribuidor: {
-            select: {
-              nombrecompleto: true,
-              empresa: true,
-            },
-          },
+          
           precioventa: true,
         },
       },
@@ -98,10 +99,8 @@ export const getOrders = async (_req: Request, res: Response) => {
       month: "long",
       day: "2-digit",
     }),
-    nombreDistribuidor: res.detallespedidos.map(
-      (res) => res.distribuidor.nombrecompleto
-    )[0],
-    empresa: res.detallespedidos.map((res) => res.distribuidor.empresa)[0],
+    nombreDistribuidor: res.distribuidor.nombrecompleto,
+    empresa: res.distribuidor.empresa,
     total: res.detallespedidos
       .map((rest) => rest.precioventa)
       .reduce((acc, curr) => Number(acc) + Number(curr), 0),

@@ -43,11 +43,11 @@ export const getdistributors = async (_req: Request, res: Response) => {
       nombrecompleto: true,
       empresa: true,
       telefono: true,
-      detallespedidos: {
+      pedidos: {
         select: {
-          fechacompra: true,
-        },
-      },
+          fechaPedido: true
+        }
+      }
     },
   });
 
@@ -55,7 +55,7 @@ export const getdistributors = async (_req: Request, res: Response) => {
     nombre: res.nombrecompleto,
     empresa: res.empresa.descripcion,
     telefono: res.telefono,
-    ultimoPedido: res.detallespedidos.map((res) => res.fechacompra).slice(-1)[0]?.toLocaleDateString("es-ES", {
+    ultimoPedido: res.pedidos.map((res) => res.fechaPedido).slice(-1)[0]?.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
       day: "2-digit",

@@ -20,7 +20,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 export const createProduct = (req: Request, res: Response) => {
-  // Usamos upload.array('image') para manejar las imágenes
   upload.array("image")(req, res, async () => {
     try {
       // Las imágenes se encuentran en req.files
@@ -28,24 +27,19 @@ export const createProduct = (req: Request, res: Response) => {
         (file) => file.path // Aquí estamos obteniendo las rutas de las imágenes
       );
 
-      // Los datos adicionales se encuentran en req.body
       const {
         idMedicamento,
         idDistribuidor,
         formaComprimida,
         codigoBarra,
         precioVenta,
-        precioCompra,
         cantidad,
       } = req.body;
 
-      // Ahora, debes manejar estos datos como arreglos
-      // Asegúrate de que todos los datos de los medicamentos se están procesando correctamente
-      // por ejemplo, para el primer medicamento:
       for (let index = 0; index < idMedicamento.length; index++) {
         const createOrder = await Prismaclient.pedidos.create({
           data: {
-            distribuidor_fk: idDistribuidor[index], // Asociar el distribuidor al medicamento
+            distribuidor_fk: Number(idDistribuidor[index]), // Asociar el distribuidor al medicamento
             estado: "COMPLETADO",
             fechaEntrega: new Date(),
             empleado_fk: 1, // Asume un empleado fijo o agrega el campo correspondiente
@@ -59,15 +53,17 @@ export const createProduct = (req: Request, res: Response) => {
             data: {
               codigoBarra: codigoBarra[index],
               precioVenta: precioVenta[index],
-              stock: cantidad[index],
+              stock: Number(cantidad[index]),
               imagen: imagenes[index],
-              forma_fk: formaComprimida[index],
+              forma_fk: Number(formaComprimida[index]),
               EstadoMedicamento: 'DISPONIBLE',
               EstadoMedicamentoExpirado: 'EXPIRADO', // Replace with appropriate value
-              medicamento_fk: idMedicamento[index], // Ensure this is correctly mapped
+              medicamento_fk: Number(idMedicamento[index]), // Ensure this is correctly mapped
             },
           });
+         
         }
+        
       }
 
       // Responder con éxito
