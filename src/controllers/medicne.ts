@@ -7,7 +7,7 @@ const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     const uploadPath = "./uploads";
     if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath); // Crear la carpeta si no existe
+      fs.mkdirSync(uploadPath);
     }
     cb(null, uploadPath);
   },
@@ -34,45 +34,65 @@ export const createProduct = (req: Request, res: Response) => {
         codigoBarra,
         precioVenta,
         cantidad,
+        fechaVencimiento,
       } = req.body;
 
       for (let index = 0; index < idMedicamento.length; index++) {
         const createOrder = await Prismaclient.pedidos.create({
           data: {
-            distribuidor_fk: Number(idDistribuidor[index]), // Asociar el distribuidor al medicamento
+            distribuidor_fk: Number(idDistribuidor[index]),
             estado: "COMPLETADO",
             fechaEntrega: new Date(),
-            empleado_fk: 1, // Asume un empleado fijo o agrega el campo correspondiente
+            empleado_fk: 1,
             fechaPedido: new Date(),
-            
           },
         });
 
         if (createOrder) {
-          await Prismaclient.variante.createMany({
+          const createVariant = await Prismaclient.variante.create({
             data: {
               codigoBarra: codigoBarra[index],
               precioVenta: precioVenta[index],
               stock: Number(cantidad[index]),
               imagen: imagenes[index],
               forma_fk: Number(formaComprimida[index]),
-              EstadoMedicamento: 'DISPONIBLE',
-              EstadoMedicamentoExpirado: 'EXPIRADO', // Replace with appropriate value
+              EstadoMedicamento: "DISPONIBLE",
+              EstadoMedicamentoExpirado: "EXPIRADO", // Replace with appropriate value
               medicamento_fk: Number(idMedicamento[index]), // Ensure this is correctly mapped
             },
           });
-         
+
+          if (createVariant) {
+            await Prismaclient.detallespedidos.create({
+              data: {
+                variante_fk: createVariant.variante_pk,
+                pedidos_fk: createOrder.pedidos_pk,
+                cantidad: Number(cantidad[index]),
+                precioventa: Number(precioVenta[index]),
+                fecha_expiracion: new Date(fechaVencimiento[index]),
+              },
+            });
+          }
         }
-        
       }
 
-      // Responder con éxito
       res.status(200).json({ message: "Medicamentos creados con éxito" });
     } catch (error) {
       console.error("Error al crear el producto:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });
+};
+export const getRegisterPerBarCode = async (req: Request, res: Response) => {
+  const data = await Prismaclient.variante.findFirst({
+    where: {
+      codigoBarra: req.params.id,
+    },
+  });
+  
+  data
+    ? res.status(200).send({ message: "Data was found" })
+    : res.status(412).send({ message: "Data not found" });
 };
 
 export const getMedicines = async (_req: Request, res: Response) => {

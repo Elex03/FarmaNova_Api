@@ -6,52 +6,67 @@ async function main() {
   // Crear Presentaciones
   // const presentaciones = await prisma.presentacion.createMany({
   //   data: [
-  //     { nombre: 'Caja' },
-  //     { nombre: 'Frasco' },
-  //     { nombre: 'Pote' },
-  //     { nombre: 'Blister' },
-  //     { nombre: 'Sobre' },
-  //     { nombre: 'Ampolla' },
+  //     { descripcion: 'Caja' },
+  //     { descripcion: 'Frasco' },
+  //     { descripcion: 'Pote' },
+  //     { descripcion: 'Blister' },
+  //     { descripcion: 'Sobre' },
+  //     { descripcion: 'Ampolla' },
+  //   ],
+  // });
+  const laboratoriosFarmaceuticos = await prisma.empresa.createMany({
+    data: [
+      { descripcion: "Laboratorios Ramos" },
+      { descripcion: "Laboratorios Solka" },
+      { descripcion: "Laboratorios LANCAS" },
+      { descripcion: "Laboratorios Rarpe" },
+      { descripcion: "Laboratorios Vega" },
+      { descripcion: "Laboratorios Infarma" },
+      { descripcion: "Laboratorios Menic" },
+      { descripcion: "Laboratorios Farinter" },
+      { descripcion: "Laboratorios Medco" },
+      { descripcion: "Laboratorios Ceguel" },
+    ],
+  });
+
+  console.log('Laboratiors agregados' , laboratoriosFarmaceuticos);
+  // console.log('Presentaciones creadas:', presentaciones);
+  // const formaFarmaceutica = await prisma.formaFarmaceutica.createMany({
+  //   data: [
+  //     { nombre: "Tableta" },
+  //     { nombre: "Cápsula" },
+  //     { nombre: "Jarabe" },
+  //     { nombre: "Suspensión" },
+  //     { nombre: "Crema" },
+  //     { nombre: "Pomada" },
+  //     { nombre: "Ungüento" },
+  //     { nombre: "Inyección" },
+  //     { nombre: "Ampolla" },
+  //     { nombre: "Spray" },
+  //     { nombre: "Supositorio" },
+  //     { nombre: "Gel" },
+  //     { nombre: "Parches" },
+  //     { nombre: "Tableta efervescente" },
+  //     { nombre: "Polvo" },
+  //     { nombre: "Láminas" },
+  //   ],
+  // });
+  // console.log('Formas creadas', formaFarmaceutica)
+  // // Crear Categorías
+  // const categorias = await prisma.accionTera.createMany({
+  //   data: [
+  //     { descripcion: "Antibióticos" },
+  //     { descripcion: "Analgésicos" },
+  //     { descripcion: "Antiácidos" },
+  //     { descripcion: "Antiinflamatorios" },
+  //     { descripcion: "Psicofármacos" },
+  //     { descripcion: "Endocrinología" },
+  //     { descripcion: "Antihipertensivos" },
+  //     { descripcion: "Antidiabéticos" },
   //   ],
   // });
 
-  // console.log('Presentaciones creadas:', presentaciones);
-  const formaFarmaceutica = await prisma.formaFarmaceutica.createMany({
-    data: [
-      { nombre: "Tableta" },
-      { nombre: "Cápsula" },
-      { nombre: "Jarabe" },
-      { nombre: "Suspensión" },
-      { nombre: "Crema" },
-      { nombre: "Pomada" },
-      { nombre: "Ungüento" },
-      { nombre: "Inyección" },
-      { nombre: "Ampolla" },
-      { nombre: "Spray" },
-      { nombre: "Supositorio" },
-      { nombre: "Gel" },
-      { nombre: "Parches" },
-      { nombre: "Tableta efervescente" },
-      { nombre: "Polvo" },
-      { nombre: "Láminas" },
-    ],
-  });
-  console.log('Formas creadas', formaFarmaceutica)
-  // Crear Categorías
-  const categorias = await prisma.accionTera.createMany({
-    data: [
-      { descripcion: "Antibióticos" },
-      { descripcion: "Analgésicos" },
-      { descripcion: "Antiácidos" },
-      { descripcion: "Antiinflamatorios" },
-      { descripcion: "Psicofármacos" },
-      { descripcion: "Endocrinología" },
-      { descripcion: "Antihipertensivos" },
-      { descripcion: "Antidiabéticos" },
-    ],
-  });
-
-  console.log("Categorías creadas:", categorias);
+  // console.log("Categorías creadas:", categorias);
 }
 
 main()

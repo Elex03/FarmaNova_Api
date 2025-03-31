@@ -161,8 +161,7 @@ model detallespedidos {
   cantidad           Int
   variante_fk        Int
   pedidos_fk         Int
-  precioventa        Float?       @db.Real
-  
+  precioventa        Float       @db.Real
   variantes          Variante     @relation(fields: [variante_fk], references: [variante_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_medicamentos_fk")
   pedidos            pedidos      @relation(fields: [pedidos_fk], references: [pedidos_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_pedidos_fk")
 }
