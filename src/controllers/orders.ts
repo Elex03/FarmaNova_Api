@@ -10,7 +10,7 @@ export const getDetailsSales = async (req: Request, res: Response) => {
         select: {
           medicamento: {
             select: {
-              nombre: true,
+              nombreComercial: true,
             },
           },
           precioVenta: true,
@@ -25,7 +25,7 @@ export const getDetailsSales = async (req: Request, res: Response) => {
   const parseData = {
     saleId: req.params.id,
     productos: data.map((res) => ({
-      nombre: res.variante.medicamento.nombre,
+      nombre: res.variante.medicamento.nombreComercial,
       precio: res.variante.precioVenta,
       cantidad: res.cantidad,
       total: Number(res.variante.precioVenta) * res.cantidad,
@@ -123,7 +123,7 @@ export const getOrdersHistory = async (req: Request, res: Response) => {
             select: {
               medicamento: {
                 select: {
-                  nombre: true,
+                  nombreComercial: true,
                 }
               },
               precioVenta: true,

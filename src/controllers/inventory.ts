@@ -52,76 +52,98 @@ export const getSalesPerWeek = async (_req: Request, res: Response) => {
   res.send(resultado);
 };
 
-export const getInventory = async (_req: Request, res: Response) => {
-  const data = await Prismaclient.variante.findMany({
-    select: {
-      medicamento: {
-        select: {
-          nombre: true
-        },
-      },
-      stock: true,
-      concentracion: true,
-      presentacion: {
-        select: {
-          nombre: true,
-        },
-      },
-      detallespedidos: {
-        select: {
-          fecha_expiracion: true,
-          distribuidor: {
-            select: {
-              nombrecompleto: true,
-            },
-          },
-        },
-      },
-    },
-  });
+export const getcompressedForm = async(_req: Request, res: Response) => {
+  const data = await Prismaclient.formaFarmaceutica.findMany({});
 
   const dataParse = data.map((res) => ({
-    descripcion:
-      (res.medicamento.nombre ?? "a") +
-      " " +
-      (res.presentacion.nombre ?? "a") +
-      " " +
-      res.concentracion,
-    stock: res.stock,
-    distribuidor: res.detallespedidos.map(
-      (dataDist) => dataDist.distribuidor.nombrecompleto
-    )[0],
-    fechaVencimiento: new Date(
-      res.detallespedidos.map((dataDist) => dataDist.fecha_expiracion)[0]
-    ).toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "2-digit",
-    }),
+    id: res.formaFarmaceutica_pk,
+    label: res.nombre,
+    value: res.nombre,
   }));
+  res.send(dataParse);
+} 
 
-  res.json(dataParse);
+
+export const getTherapeutiAaction = async (_req: Request, res: Response) => {
+  const data = await Prismaclient.accionTera.findMany({});
+
+  const dataParse = data.map((res) => ({
+    id: res.accionTerapeutica_pk,
+    label: res.descripcion,
+  }));
+  res.send(dataParse);
 };
+
+// export const getInventory = async (_req: Request, res: Response) => {
+//   const data = await Prismaclient.variante.findMany({
+//     select: {
+//       medicamento: {
+//         select: {
+//           nombreComercial: true,
+//         },
+//       },
+//       stock: true,
+//       concentracion: true,
+//       presentacion: {
+//         select: {
+//           nombre: true,
+//         },
+//       },
+//       detallespedidos: {
+//         select: {
+//           fecha_expiracion: true,
+//           distribuidor: {
+//             select: {
+//               nombrecompleto: true,
+//             },
+//           },
+//         },
+//       },
+//     },
+//   });
+
+//   const dataParse = data.map((res) => ({
+//     descripcion:
+//       (res.medicamento.nombreComercial ?? "a") +
+//       " " +
+//       (res.presentacion.nombre ?? "a") +
+//       " " +
+//       res.concentracion,
+//     stock: res.stock,
+//     distribuidor: res.detallespedidos.map(
+//       (dataDist) => dataDist.distribuidor.nombrecompleto
+//     )[0],
+//     fechaVencimiento: new Date(
+//       res.detallespedidos.map((dataDist) => dataDist.fecha_expiracion)[0]
+//     ).toLocaleDateString("es-ES", {
+//       year: "numeric",
+//       month: "long",
+//       day: "2-digit",
+//     }),
+//   }));
+
+//   res.json(dataParse);
+// };
 export const getCategory = async (_req: Request, res: Response) => {
-  const data = await Prismaclient.categoria.findMany({
+  const data = await Prismaclient.accionTera.findMany({
     select: {
-      categoria_pk: true,
+      accionTerapeutica_pk: true,
       descripcion: true,
     },
-    distinct: ["categoria_pk"],
+    distinct: ["accionTerapeutica_pk"],
   });
 
   const groupedData = data.reduce((acc: any[], item: any) => {
     const existingCategory = acc.find(
-      (cat) => cat.categoria_pk === item.categoria_pk
+      (cat) => cat.accionTerapeutica_pk === item.accionTerapeutica_pk
     );
     if (existingCategory) {
       existingCategory.cantidad += 1;
     } else {
       acc.push({
-        id: item.categoria_pk,
+        id: item.accionTerapeutica_pk,
         label: item.descripcion,
-        value: item.categoria_pk,
+        value: item.descripcion,
       });
     }
     return acc;
