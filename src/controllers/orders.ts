@@ -26,7 +26,7 @@ export const getDetailsSales = async (req: Request, res: Response) => {
     saleId: req.params.id,
     productos: data.map((res) => ({
       nombre: res.variante.medicamento.nombreComercial,
-      precio: res.variante.precioVenta,
+      precio: Number(res.variante.precioVenta),
       cantidad: res.cantidad,
       total: Number(res.variante.precioVenta) * res.cantidad,
     })),
@@ -64,7 +64,7 @@ export const getSales = async (_req: Request, res: Response) => {
     }, 0);
 
     return {
-      ventas_pk: venta.ventas_pk,
+      id: venta.ventas_pk,
       cliente: venta.cliente.cedula,
       fechaventa: venta.fechaventa,
       total,
