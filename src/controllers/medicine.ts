@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { Prismaclient } from "../constants/db"; // Asegúrate de que esta ruta esté correcta
+import { Prismaclient } from "../constants/db"; 
 import multer from "multer";
 import fs from "fs";
+import { EstadoMedicamento } from "@prisma/client";
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -309,18 +310,34 @@ export const createSales = async (req: Request, res: Response) => {
 
     if (dataDetalles) {
       await Promise.all(
-        req.body.detalles.map(
-          async (detalle: { id: number; cantidad: number }) => {
-            await Prismaclient.variante.update({
-              where: { variante_pk: detalle.id },
-              data: {
-                stock: {
-                  decrement: detalle.cantidad, // Resta la cantidad vendida
-                },
-              },
-            });
+        req.body.detalles.map(async (detalle: { id: number; cantidad: number }) => {
+          // Obtener el stock actual del producto antes de actualizarlo
+          const producto = await Prismaclient.variante.findUnique({
+            where: { variante_pk: detalle.id },
+            select: { stock: true },
+          });
+    
+          if (!producto) return; // Si el producto no existe, salir
+    
+          const nuevoStock = producto.stock - detalle.cantidad;
+    
+          // Determinar el estado según el nuevo stock
+          let nuevoEstado: EstadoMedicamento = EstadoMedicamento.DISPONIBLE;
+          if (nuevoStock === 0) {
+            nuevoEstado = EstadoMedicamento.AGOTADO;
+          } else if (nuevoStock < 20) {
+            nuevoEstado = EstadoMedicamento.PROXIMO_A_AGOTARSE;
           }
-        )
+    
+          // Actualizar el stock y el estado
+          await Prismaclient.variante.update({
+            where: { variante_pk: detalle.id },
+            data: {
+              stock: { decrement: detalle.cantidad },
+              EstadoMedicamento: nuevoEstado,
+            },
+          });
+        })
       );
     } else {
       await Prismaclient.ventas.delete({
