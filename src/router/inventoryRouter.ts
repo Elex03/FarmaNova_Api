@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getCategory, getcompressedForm, getSalesPerWeek } from "../controllers/inventory";
-import { createProduct, createMedicine, getMedicines, getRegisterPerBarCode } from "../controllers/medicne";
+import { createProduct, createMedicine, getMedicines, getRegisterPerBarCode } from "../controllers/medicine";
 
 const inventoryRouter = Router();
 

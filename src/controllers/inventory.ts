@@ -143,7 +143,7 @@ export const getCategory = async (_req: Request, res: Response) => {
       acc.push({
         id: item.accionTerapeutica_pk,
         label: item.descripcion,
-        value: item.descripcion,
+        value: item.accionTerapeutica_pk,
       });
     }
     return acc;
@@ -152,15 +152,6 @@ export const getCategory = async (_req: Request, res: Response) => {
   res.send(groupedData);
 };
 
-export const getOneMedicine = async (req: Request, res: Response) => {
-  const data = await Prismaclient.medicamentos.findFirst({
-    where: {
-      medicamento_pk: +req.params.id,
-    },
-  });
-
-  res.json(data);
-};
 
 export const deleteOneMedicine = async (req: Request, res: Response) => {
   const data = await Prismaclient.medicamentos.delete({

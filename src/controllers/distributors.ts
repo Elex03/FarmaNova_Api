@@ -15,7 +15,6 @@ export const createDistributor = async (req: Request, res: Response) => {
       });
     }
 
-    // Crear el distribuidor si la empresa existe
     const data = await Prismaclient.distribuidor.create({
       data: {
         nombrecompleto: nombre,
@@ -50,6 +49,8 @@ export const getdistributors = async (_req: Request, res: Response) => {
     nombre: res.nombrecompleto,
     empresa: res.empresa.descripcion,
     telefono: res.telefono,
+    label: res.nombrecompleto, 
+    value: res.nombrecompleto,
     ultimoPedido: res.pedidos
       .map((res) => res.fechaPedido)
       .slice(-1)[0]

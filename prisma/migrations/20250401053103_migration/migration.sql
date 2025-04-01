@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "cliente" ALTER COLUMN "cedula" SET DATA TYPE VARCHAR(25);

@@ -40,7 +40,7 @@ export const getSales = async (_req: Request, res: Response) => {
       ventas_pk: true,
       cliente: {
         select: {
-          nombrecompleto: true,
+          cedula: true,
         },
       },
       fechaventa: true,
@@ -65,7 +65,7 @@ export const getSales = async (_req: Request, res: Response) => {
 
     return {
       ventas_pk: venta.ventas_pk,
-      cliente: venta.cliente.nombrecompleto,
+      cliente: venta.cliente.cedula,
       fechaventa: venta.fechaventa,
       total,
     };

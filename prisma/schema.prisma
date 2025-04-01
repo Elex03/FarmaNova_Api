@@ -20,7 +20,8 @@ enum Estado {
 
 enum EstadoMedicamento {
   DISPONIBLE
-  NO_DISPONIBLE
+  PROXIMO_A_AGOTARSE
+  AGOTADO
 }
 
 enum EstadoMedicamentoExpirado {
@@ -45,10 +46,7 @@ model accionTera {
 
 model cliente {
   cliente_pk     Int      @id(map: "cliente_pk") @default(autoincrement())
-  nombrecompleto String   @db.VarChar(50)
-  telefono       String   @db.VarChar(10)
-  usuario_fk     Int
-  usuario        usuario  @relation(fields: [usuario_fk], references: [usuario_pk], onDelete: NoAction, onUpdate: NoAction, map: "cliente_usuario_fk")
+  cedula String   @db.VarChar(25)
   ventas         ventas[]
 }
 
@@ -107,13 +105,14 @@ model medicamentos {
 model Variante {
   imagen                    String?
   variante_pk               Int                       @id @default(autoincrement())
-  codigoBarra               String? //Verse
+  codigoBarra               String?                   @unique
+  requierePrescripcion      Boolean                   @default(false)
   EstadoMedicamento         EstadoMedicamento
   EstadoMedicamentoExpirado EstadoMedicamentoExpirado
   medicamento_fk            Int
   medicamento               medicamentos              @relation(fields: [medicamento_fk], references: [medicamento_pk])
   forma_fk       Int
-  formaFarmaceutica          FormaFarmaceutica            @relation(fields: [forma_fk], references: [formaFarmaceutica_pk])
+  formaFarmaceutica     FormaFarmaceutica            @relation(fields: [forma_fk], references: [formaFarmaceutica_pk])
   precioVenta           Decimal                 @default(0.00)
   stock                 Int                     @default(0)
   detallespedidos       detallespedidos[]
@@ -128,7 +127,6 @@ model usuario {
   fechacreacion DateTime  @db.Date
   correo        String    @db.VarChar(30)
   contrase_a    String    @db.VarChar(20)
-  cliente       cliente[]
   rol           Rol
 }
 
