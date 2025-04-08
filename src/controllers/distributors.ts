@@ -40,6 +40,7 @@ export const getdistributors = async (_req: Request, res: Response) => {
       pedidos: {
         select: {
           fechaPedido: true,
+          pedidos_pk: true,
         },
       },
     },

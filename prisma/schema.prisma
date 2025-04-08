@@ -31,23 +31,24 @@ enum EstadoMedicamentoExpirado {
 }
 
 model accionmedicamentos {
-  catmed_pk    Int       @id(map: "categoriamedicamentos_pk") @default(autoincrement())
-  medicamento_fk  Int
+  catmed_pk            Int          @id(map: "categoriamedicamentos_pk") @default(autoincrement())
+  medicamento_fk       Int
   accionTerapeutica_fk Int
-  accionTera    accionTera @relation(fields: [accionTerapeutica_fk], references: [accionTerapeutica_pk], onDelete: NoAction, onUpdate: NoAction, map: "categoriamedicamentos_categoria_fk")
-  medicamentos     medicamentos  @relation(fields: [medicamento_fk], references: [medicamento_pk], onDelete: NoAction, onUpdate: NoAction, map: "categoriamedicamentos_medicamentos_fk")
+  accionTera           accionTera   @relation(fields: [accionTerapeutica_fk], references: [accionTerapeutica_pk], onDelete: NoAction, onUpdate: NoAction, map: "categoriamedicamentos_categoria_fk")
+  medicamentos         medicamentos @relation(fields: [medicamento_fk], references: [medicamento_pk], onDelete: NoAction, onUpdate: NoAction, map: "categoriamedicamentos_medicamentos_fk")
 }
 
 model accionTera {
-  accionTerapeutica_pk          Int                     @id(map: "accionTerapeutica_pk") @default(autoincrement())
-  descripcion           String                  @db.VarChar(50)
+  accionTerapeutica_pk  Int                  @id(map: "accionTerapeutica_pk") @default(autoincrement())
+  descripcion           String               @db.VarChar(50)
   categoriamedicamentos accionmedicamentos[]
 }
 
 model cliente {
-  cliente_pk     Int      @id(map: "cliente_pk") @default(autoincrement())
-  cedula String   @db.VarChar(25)
-  ventas         ventas[]
+  cliente_pk Int      @id(map: "cliente_pk") @default(autoincrement())
+  cedula     String   @db.VarChar(25)
+  nombre String @default("No brindo") @db.VarChar(50)
+  ventas     ventas[]
 }
 
 model detallesventa {
@@ -60,11 +61,11 @@ model detallesventa {
 }
 
 model distribuidor {
-  distribuidor_pk Int               @id(map: "distribuidor_pk") @default(autoincrement())
-  nombrecompleto  String            @db.VarChar(50)
-  telefono        String            @db.VarChar(10)
+  distribuidor_pk Int       @id(map: "distribuidor_pk") @default(autoincrement())
+  nombrecompleto  String    @db.VarChar(50)
+  telefono        String    @db.VarChar(10)
   empresa_fk      Int
-  empresa         empresa           @relation(fields: [empresa_fk], references: [empresa_pk], onDelete: NoAction, onUpdate: NoAction, map: "distribuidor_empresa_fk")
+  empresa         empresa   @relation(fields: [empresa_fk], references: [empresa_pk], onDelete: NoAction, onUpdate: NoAction, map: "distribuidor_empresa_fk")
   pedidos         pedidos[]
 }
 
@@ -89,15 +90,14 @@ model FormaFarmaceutica {
   Variante Variante[]
 }
 
-
 model medicamentos {
-  medicamento_pk       Int               @id(map: "medicamentos_pk") @default(autoincrement())
-  nombreComercial      String
-  nombreGenerico       String
-  concentracion        String
-  variantes            Variante[]
-  fechaCreacion        DateTime?         @db.Date
-  fechaModificacion    DateTime?         @db.Date
+  medicamento_pk    Int        @id(map: "medicamentos_pk") @default(autoincrement())
+  nombreComercial   String
+  nombreGenerico    String
+  concentracion     String
+  variantes         Variante[]
+  fechaCreacion     DateTime?  @db.Date
+  fechaModificacion DateTime?  @db.Date
 
   accionmedicamentos accionmedicamentos[] @relation(map: "categoriamedicamentos_medicamentos_fk")
 }
@@ -105,28 +105,38 @@ model medicamentos {
 model Variante {
   imagen                    String?
   variante_pk               Int                       @id @default(autoincrement())
-  codigoBarra               String?                   @unique
+  codigoBarra               String?                  
   requierePrescripcion      Boolean                   @default(false)
   EstadoMedicamento         EstadoMedicamento
   EstadoMedicamentoExpirado EstadoMedicamentoExpirado
   medicamento_fk            Int
   medicamento               medicamentos              @relation(fields: [medicamento_fk], references: [medicamento_pk])
-  forma_fk       Int
-  formaFarmaceutica     FormaFarmaceutica            @relation(fields: [forma_fk], references: [formaFarmaceutica_pk])
-  precioVenta           Decimal                 @default(0.00)
-  stock                 Int                     @default(0)
-  detallespedidos       detallespedidos[]
-  detallesventa         detallesventa[]
-  fehcaexpiracion       DateTime?               @db.Date
-  fechaCreacion         DateTime?               @db.Date
-  fechaModificacion     DateTime?               @db.Date
+  forma_fk                  Int
+  formaFarmaceutica         FormaFarmaceutica         @relation(fields: [forma_fk], references: [formaFarmaceutica_pk])
+  precioVenta               Decimal                   @default(0.00)
+  stock                     Int                       @default(0)
+  detallespedidos           detallespedidos[]
+  detallesventa             detallesventa[]
+  devoluciones              Devoluciones[]
+  fehcaexpiracion           DateTime?                 @db.Date
+  fechaCreacion             DateTime?                 @db.Date
+  fechaModificacion         DateTime?                 @db.Date
 }
 
+model Devoluciones {
+  devoluciones_pk  Int      @id(map: "devoluciones_pk") @default(autoincrement())
+  descripcion      String   @db.VarChar(150)
+  variante_fk      Int
+  variante         Variante @relation(fields: [variante_fk], references: [variante_pk], onDelete: NoAction, onUpdate: NoAction, map: "devoluciones_medicamentos_fk")
+  cantidad         Int
+}
+
+
 model usuario {
-  usuario_pk    Int       @id(map: "usuario_pk") @default(autoincrement())
-  fechacreacion DateTime  @db.Date
-  correo        String    @db.VarChar(30)
-  contrase_a    String    @db.VarChar(20)
+  usuario_pk    Int      @id(map: "usuario_pk") @default(autoincrement())
+  fechacreacion DateTime @db.Date
+  correo        String   @db.VarChar(30)
+  contrase_a    String   @db.VarChar(20)
   rol           Rol
 }
 
@@ -154,12 +164,12 @@ model pedidos {
 }
 
 model detallespedidos {
-  detallespedidos_pk Int          @id @default(autoincrement())
-  fecha_expiracion   DateTime     @db.Date
+  detallespedidos_pk Int      @id @default(autoincrement())
+  fecha_expiracion   DateTime @db.Date
   cantidad           Int
   variante_fk        Int
   pedidos_fk         Int
-  precioventa        Float       @db.Real
-  variantes          Variante     @relation(fields: [variante_fk], references: [variante_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_medicamentos_fk")
-  pedidos            pedidos      @relation(fields: [pedidos_fk], references: [pedidos_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_pedidos_fk")
+  precioventa        Float    @db.Real
+  variantes          Variante @relation(fields: [variante_fk], references: [variante_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_medicamentos_fk")
+  pedidos            pedidos  @relation(fields: [pedidos_fk], references: [pedidos_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_pedidos_fk")
 }

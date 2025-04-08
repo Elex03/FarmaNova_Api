@@ -40,7 +40,7 @@ export const getSales = async (_req: Request, res: Response) => {
       ventas_pk: true,
       cliente: {
         select: {
-          cedula: true,
+          nombre: true,
         },
       },
       fechaventa: true,
@@ -58,15 +58,18 @@ export const getSales = async (_req: Request, res: Response) => {
 
   const ventasConTotal = data.map((venta) => {
     const total = venta.detallesventa.reduce((acc, detalle) => {
-      // Aseguramos que el precioVenta es un número
       const precioMedicamentos = detalle.variante.precioVenta || 0;
       return acc + precioMedicamentos.toNumber();
     }, 0);
 
     return {
       id: venta.ventas_pk,
-      cliente: venta.cliente.cedula,
-      fechaventa: venta.fechaventa,
+      cliente: venta.cliente.nombre,
+      fechaventa: venta.fechaventa.toLocaleDateString("es-ES", {
+        year: "numeric",
+        month: "long",
+        day: "2-digit",
+      }),
       total,
     };
   });
@@ -85,7 +88,6 @@ export const getOrders = async (_req: Request, res: Response) => {
       },
       detallespedidos: {
         select: {
-          
           precioventa: true,
         },
       },
@@ -123,7 +125,7 @@ export const getOrdersHistory = async (req: Request, res: Response) => {
               medicamento: {
                 select: {
                   nombreComercial: true,
-                }
+                },
               },
               precioVenta: true,
             },
@@ -136,4 +138,54 @@ export const getOrdersHistory = async (req: Request, res: Response) => {
     },
   });
   res.send(data);
+};
+
+export const getOneOrderHistory = async (req: Request, res: Response) => {
+  const data = await Prismaclient.pedidos.findMany({
+    select: {
+      estado: true,
+      distribuidor: {
+        select: {
+          distribuidor_pk: true,
+          nombrecompleto: true,
+          empresa: {
+            select: {
+              descripcion: true,
+            },
+          },
+        },
+      },
+      fechaPedido: true,
+      fechaEntrega: true,
+      detallespedidos: {
+        select: {
+          precioventa: true, 
+          cantidad: true,
+        },
+      },
+    },
+    where: {
+      distribuidor_fk: Number(req.params.id),
+    },
+  });
+
+  const response = data.map((pedido) => {
+    // Sumamos los precios de venta de los detalles del pedido
+    let totalPedido = 0;
+    pedido.detallespedidos.forEach((detalle) => {
+      totalPedido += (detalle.precioventa * detalle.cantidad); // Asegúrate de que 'precioventa' sea un número
+    });
+  
+    return {
+      id: pedido.distribuidor.distribuidor_pk,
+      nombre: pedido.distribuidor.nombrecompleto,
+      empresa: pedido.distribuidor.empresa.descripcion,
+      fechaPedido: new Date(pedido.fechaPedido).toLocaleDateString("es-ES"),
+      estado: pedido.estado,
+      total: totalPedido.toFixed(2), 
+      fechaEntrega: pedido.fechaEntrega ? new Date(pedido.fechaEntrega).toLocaleDateString("es-ES") : null, // Si 'fechaEntrega' está disponible
+    };
+  });
+  
+  res.send(response);
 };

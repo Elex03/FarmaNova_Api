@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { Prismaclient } from "../constants/db"; 
 import multer from "multer";
 import fs from "fs";
-import { EstadoMedicamento } from "@prisma/client";
+import { EstadoMedicamento,  } from "@prisma/client";
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -34,8 +34,10 @@ export const createProduct = (req: Request, res: Response) => {
         formaComprimida,
         codigoBarra,
         precioVenta,
+        precioCompra,
         cantidad,
         fechaVencimiento,
+        requiere,
       } = req.body;
 
       for (let index = 0; index < idMedicamento.length; index++) {
@@ -60,6 +62,7 @@ export const createProduct = (req: Request, res: Response) => {
               EstadoMedicamento: "DISPONIBLE",
               EstadoMedicamentoExpirado: "EXPIRADO", // Replace with appropriate value
               medicamento_fk: Number(idMedicamento[index]), // Ensure this is correctly mapped
+              requierePrescripcion: requiere === "true"? true:false
             },
           });
 
@@ -69,7 +72,7 @@ export const createProduct = (req: Request, res: Response) => {
                 variante_fk: createVariant.variante_pk,
                 pedidos_fk: createOrder.pedidos_pk,
                 cantidad: Number(cantidad[index]),
-                precioventa: Number(precioVenta[index]),
+                precioventa: Number(precioCompra[index]),
                 fecha_expiracion: new Date(fechaVencimiento[index]),
               },
             });
@@ -161,7 +164,12 @@ export const getRegisterPerBarCode = async (req: Request, res: Response) => {
         select: {
           distribuidor: {
             select: {
-              nombrecompleto: true,
+              distribuidor_pk: true,
+              empresa:{
+                select: {
+                  descripcion: true
+                }
+              }
             },
           },
         },
@@ -169,11 +177,19 @@ export const getRegisterPerBarCode = async (req: Request, res: Response) => {
       variantes: {
         select: {
           variante_pk: true,
+          requierePrescripcion: true,
           imagen: true,
-          formaFarmaceutica: true,
+          stock: true,
+          formaFarmaceutica: {
+            select: {
+              formaFarmaceutica_pk: true
+            }
+          },
           medicamento: {
             select: {
+              medicamento_pk: true,
               nombreComercial: true,
+              concentracion: true,
             },
           },
           codigoBarra: true,
@@ -186,11 +202,18 @@ export const getRegisterPerBarCode = async (req: Request, res: Response) => {
   if (data) {
     const dataParse = {
       key: data?.variantes.variante_pk,
-      medicamento: data?.variantes.medicamento.nombreComercial,
-      distribuidor: data?.pedidos.distribuidor.nombrecompleto,
+      id: data.variantes.variante_pk,
+      descripcion: `${data.variantes.medicamento.nombreComercial} ${data.variantes.medicamento.concentracion}`,
+      empresa: data.pedidos.distribuidor.empresa.descripcion,
+      medicamento: data?.variantes.medicamento.medicamento_pk,
+      distribuidor: data?.pedidos.distribuidor.distribuidor_pk,
+      maxCantidad: data.variantes.stock, 
+      requierePrescripcion: data.variantes.requierePrescripcion,
       codigoBarra: data?.variantes.codigoBarra,
       precioVenta: data?.variantes.precioVenta,
+      precio: data.variantes.precioVenta,
       precioCompra: data?.precioventa,
+      formaComprimida: data.variantes.formaFarmaceutica.formaFarmaceutica_pk,
       cantidad: 0,
       fechaVencimiento: data?.fecha_expiracion,
     };
@@ -264,8 +287,77 @@ export const getCatalogMedicines = async (_req: Request, res: Response) => {
     res.status(500).json({ error: "Error al obtener los medicamentos" });
   }
 };
+
+
+export const getCatalogMedicinesInventory = async (_req: Request, res: Response) => {
+  const data = await Prismaclient.variante.findMany({
+    select: {
+      variante_pk: true,
+      medicamento: {
+        select: {
+          concentracion: true, 
+          nombreComercial: true,
+          nombreGenerico: true,
+        }
+      }, 
+      formaFarmaceutica: {
+        select: {
+          nombre: true, 
+        }
+      }, 
+      detallespedidos: {
+        select : {
+          precioventa: true,
+          fecha_expiracion: true, 
+          pedidos: {
+            select: {
+              distribuidor : {
+                select: {
+                  empresa: {
+                    select: {
+                      descripcion: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }, 
+      stock: true, 
+      precioVenta: true
+    }
+  })
+  const parsedData = data.map(item => {
+    return {
+      id: item.variante_pk, // Suponiendo que tienes un campo 'id'
+      descripcion: `${item.medicamento.nombreComercial} ${item.medicamento.concentracion}`,
+      inventario: item.stock,
+      distribuidor: item.detallespedidos[0]?.pedidos?.distribuidor?.empresa.descripcion || "No disponible",
+      vencimiento: item.detallespedidos[0]?.fecha_expiracion
+      ? new Date(item.detallespedidos[0].fecha_expiracion).toLocaleDateString("es-ES", {
+          year: "numeric",
+          month: "long",
+          day: "2-digit",
+        })
+      : "Fecha no disponible",
+      nombreComercial: item.medicamento.nombreComercial,
+      nombreGenerico: item.medicamento.nombreGenerico,
+      formaFarmaceutica: item.formaFarmaceutica.nombre,
+      concentracion: item.medicamento.concentracion,
+      presentacion: "Caja x 10", // Aquí asumo que la presentación es estática o debe ser extraída de alguna parte
+      laboratorio:  item.detallespedidos[0]?.pedidos.distribuidor.empresa.descripcion, // Aquí también, necesitas ajustar si tienes la información del laboratorio
+      precioCompra: item.detallespedidos[0]?.precioventa || 0, // Usamos el primer precio de venta de los detalles
+      precioVenta: item.precioVenta,
+      margenUtilidad: Number(item.precioVenta) - item.detallespedidos[0]?.precioventa || 0
+    };
+  });
+
+
+  res.send(parsedData);
+}
 export const createSales = async (req: Request, res: Response) => {
-  const { cliente } = req.body;
+  const { cliente, nombreCliente } = req.body;
 
   let clienteId = 0;
 
@@ -280,6 +372,7 @@ export const createSales = async (req: Request, res: Response) => {
         const newClient = await Prismaclient.cliente.create({
           data: {
             cedula: cliente,
+            nombre: nombreCliente
           },
         });
         clienteId = newClient?.cliente_pk;
