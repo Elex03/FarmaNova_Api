@@ -19,7 +19,7 @@ export const createDistributor = async (req: Request, res: Response) => {
       data: {
         nombrecompleto: nombre,
         telefono,
-        empresa_fk: Number(empresa_valid?.empresa_pk), 
+        empresa_fk: Number(empresa_valid?.empresa_pk),
       },
     });
 
@@ -46,11 +46,19 @@ export const getdistributors = async (_req: Request, res: Response) => {
     },
   });
 
+  const headers = [
+    { key: "nombre", header: "Nombre" },
+    { key: "empresa", header: "Empresa" },
+    { key: "telefono", header: "Nro telefonico" },
+    { key: "ultimoPedido", header: "Ultimo pedido" },
+  ];
+
+
   const dataParse = data.map((res) => ({
     nombre: res.nombrecompleto,
     empresa: res.empresa.descripcion,
     telefono: res.telefono,
-    label: res.nombrecompleto, 
+    label: res.nombrecompleto,
     value: res.nombrecompleto,
     ultimoPedido: res.pedidos
       .map((res) => res.fechaPedido)
@@ -63,7 +71,7 @@ export const getdistributors = async (_req: Request, res: Response) => {
     id: res.distribuidor_pk,
   }));
 
-  res.send(dataParse);
+  res.send({data: dataParse, headers});
 };
 
 export const getListDistributors = async (_req: Request, res: Response) => {
@@ -95,4 +103,49 @@ export const getCompanies = async (_req: Request, res: Response) => {
   }));
 
   res.send(dataParse);
+};
+
+export const getdistributorsGraphic = async (_req: Request, res: Response) => {
+  const data = await Prismaclient.detallespedidos.findMany({
+    select: {
+      cantidad: true,
+      pedidos: {
+        select: {
+          distribuidor: {
+            
+            select: {
+              empresa: 
+              {
+                select: {
+                  empresa_pk: true,
+                  descripcion: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  
+  const grouped: Record<number, { distribuidor: string; distribuidor_pk: number; cantidad: number }> = {};
+  
+  for (const item of data) {
+    const distribuidor = item.pedidos.distribuidor;
+    const id = distribuidor.empresa.empresa_pk;
+  
+    if (!grouped[id]) {
+      grouped[id] = {
+        distribuidor: distribuidor.empresa.descripcion,
+        distribuidor_pk: id,
+        cantidad: 0,
+      };
+    }
+  
+    grouped[id].cantidad += item.cantidad;
+  }
+  
+  const result = Object.values(grouped);
+
+  res.send(result);
 };

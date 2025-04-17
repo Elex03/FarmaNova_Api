@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getCategory, getcompressedForm, getSalesPerWeek } from "../controllers/inventory";
+import { getCategory, getcompressedForm, getInventoryData, getSalesPerWeek } from "../controllers/inventory";
 import { createProduct, createMedicine, getMedicines, getRegisterPerBarCode } from "../controllers/medicine";
 
 const inventoryRouter = Router();
@@ -14,5 +14,9 @@ inventoryRouter.get('/getMedicine', getMedicines);
 inventoryRouter.get('/getCompressedforms', getcompressedForm);
 
 inventoryRouter.get('/getRegisterPerBarCode/:id', getRegisterPerBarCode);
+
+
+
+inventoryRouter.get('/getInventoryData', getInventoryData);
 
 export default inventoryRouter;

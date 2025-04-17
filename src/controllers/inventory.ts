@@ -52,7 +52,7 @@ export const getSalesPerWeek = async (_req: Request, res: Response) => {
   res.send(resultado);
 };
 
-export const getcompressedForm = async(_req: Request, res: Response) => {
+export const getcompressedForm = async (_req: Request, res: Response) => {
   const data = await Prismaclient.formaFarmaceutica.findMany({});
 
   const dataParse = data.map((res) => ({
@@ -61,8 +61,7 @@ export const getcompressedForm = async(_req: Request, res: Response) => {
     value: res.nombre,
   }));
   res.send(dataParse);
-} 
-
+};
 
 export const getTherapeutiAaction = async (_req: Request, res: Response) => {
   const data = await Prismaclient.accionTera.findMany({});
@@ -152,7 +151,6 @@ export const getCategory = async (_req: Request, res: Response) => {
   res.send(groupedData);
 };
 
-
 export const deleteOneMedicine = async (req: Request, res: Response) => {
   const data = await Prismaclient.medicamentos.delete({
     where: {
@@ -161,4 +159,93 @@ export const deleteOneMedicine = async (req: Request, res: Response) => {
   });
   if (!data) res.send("No se ha podido eliminar el medicamento");
   else res.send("Medicamento eliminado con exito");
+};
+
+export const getInventoryData = async (_req: Request, res: Response) => {
+  const data = await Prismaclient.variante.findMany({
+    select: {
+      variante_pk: true,
+      imagen: true,
+      precioVenta: true,
+      EstadoMedicamento: true,
+      fehcaexpiracion: true,
+      EstadoMedicamentoExpirado: true,
+      medicamento: {
+        select: {
+          nombreComercial: true,
+          concentracion: true,
+        },
+      },
+      stock: true,
+      formaFarmaceutica: {
+        select: {
+          nombre: true,
+        },
+      },
+
+      detallespedidos: {
+        select: {
+          fecha_expiracion: true,
+          precioventa: true,
+          pedidos: {
+            select: {
+              distribuidor: {
+                select: {
+                  nombrecompleto: true,
+                  empresa: {
+                    select: {
+                      descripcion: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const headers = [
+    { key: "descripcion", header: "Descripcion" },
+    { key: "empresa", header: "Empresa" },
+    { key: "stock", header: "Stock" },
+    { key: "estadoStock", header: "Estado del stock" },
+    { key: "fechaVencimiento", header: "Fecha Vencimiento" },
+    { key: "EstadoMedicamentoExpirado", header: "Estado Medicamento Expirado" },
+    { key: "precioCompra", header: "Precio Compra" },
+    { key: "precioVenta", header: "Precio Venta" },
+    { key: "utilidadBruta", header: "Utilidad Bruta" },
+  ];
+
+  const dataParse = data.map((res) => ({
+    id: res.variante_pk,
+    descripcion:
+      res.medicamento.nombreComercial +
+      " " +
+      res.medicamento.concentracion +
+      " " +
+      res.formaFarmaceutica.nombre,
+    stock: res.stock,
+    estadoStock: res.EstadoMedicamento,
+    fechaVencimiento: res.detallespedidos.map((dataDist) =>
+      dataDist.fecha_expiracion.toISOString().split("T")[0].replace(/-/g, "/")
+    )[0],
+    empresa: res.detallespedidos.map(
+      (dataDist) => dataDist.pedidos.distribuidor.empresa.descripcion
+    )[0],
+    precioCompra: res.detallespedidos.map(
+      (dataDist) => dataDist.precioventa
+    )[0],
+    precioVenta: res.precioVenta,
+    EstadoMedicamentoExpirado: res.EstadoMedicamentoExpirado,
+    utilidadBruta: res.detallespedidos.map(
+      (dataDist) => Number(res.precioVenta) - Number(dataDist.precioventa)
+    )[0],
+    imagenUrl: res.imagen
+      ? `http://localhost:3000/apiFarmaNova/${res.imagen}`
+      : "http://localhost:3000/apiFarmaNova/uploads/NF.jpg",
+  }));
+
+  res.send({ data: dataParse, headers });
 };

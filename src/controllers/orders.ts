@@ -56,6 +56,11 @@ export const getSales = async (_req: Request, res: Response) => {
     },
   });
 
+  const headers = [
+    { key: "cliente", header: "Nombre del cliente" },
+    { key: "fechaventa", header: "Fecha de la venta" },
+    { key: "total", header: "Total de la venta" },
+  ];
   const ventasConTotal = data.map((venta) => {
     const total = venta.detallesventa.reduce((acc, detalle) => {
       const precioMedicamentos = detalle.variante.precioVenta || 0;
@@ -74,7 +79,7 @@ export const getSales = async (_req: Request, res: Response) => {
     };
   });
 
-  res.send(ventasConTotal);
+  res.send({ data: ventasConTotal, headers });
 };
 
 export const getOrders = async (_req: Request, res: Response) => {
@@ -137,6 +142,7 @@ export const getOrdersHistory = async (req: Request, res: Response) => {
       },
     },
   });
+
   res.send(data);
 };
 
@@ -159,7 +165,7 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
       fechaEntrega: true,
       detallespedidos: {
         select: {
-          precioventa: true, 
+          precioventa: true,
           cantidad: true,
         },
       },
@@ -169,23 +175,66 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
     },
   });
 
+  const headers = [
+    { key: "nombre", header: "Nombre" },
+    { key: "empresa", header: "Empresa" },
+    { key: "estado", header: "Estado del pedido" },
+    { key: "total", header: "Total del pedido" },
+    { key: "fechaPedido", header: "Fecha de la orden" },
+    { key: "fechaEntrega", header: "Fecha de entrega de la orden" },
+  ];
+
   const response = data.map((pedido) => {
     // Sumamos los precios de venta de los detalles del pedido
     let totalPedido = 0;
     pedido.detallespedidos.forEach((detalle) => {
-      totalPedido += (detalle.precioventa * detalle.cantidad); // Asegúrate de que 'precioventa' sea un número
+      totalPedido += detalle.precioventa * detalle.cantidad; // Asegúrate de que 'precioventa' sea un número
     });
-  
+
     return {
       id: pedido.distribuidor.distribuidor_pk,
       nombre: pedido.distribuidor.nombrecompleto,
       empresa: pedido.distribuidor.empresa.descripcion,
       fechaPedido: new Date(pedido.fechaPedido).toLocaleDateString("es-ES"),
       estado: pedido.estado,
-      total: totalPedido.toFixed(2), 
-      fechaEntrega: pedido.fechaEntrega ? new Date(pedido.fechaEntrega).toLocaleDateString("es-ES") : null, // Si 'fechaEntrega' está disponible
+      total: totalPedido.toFixed(2),
+      fechaEntrega: pedido.fechaEntrega
+        ? new Date(pedido.fechaEntrega).toLocaleDateString("es-ES")
+        : null, // Si 'fechaEntrega' está disponible
     };
   });
-  
-  res.send(response);
+
+  res.send({ data: response, headers });
+};
+
+export const getOrdersGraph = async (req: Request, res: Response) => {
+  const data = await Prismaclient.pedidos.findMany({
+    select: {
+      fechaPedido: true,
+    },
+    where: {
+      distribuidor_fk: Number(req.params.id),
+    },
+  });
+
+  const pedidosPorMes: Record<number, number> = {};
+  for (let i = 0; i < 12; i++) {
+    pedidosPorMes[i] = 0;
+  }
+
+  // Contamos los pedidos por mes
+  data.forEach((pedido) => {
+    const mes = new Date(pedido.fechaPedido).getMonth(); // 0 = enero
+    pedidosPorMes[mes] += 1;
+  });
+
+  const response = Object.entries(pedidosPorMes)
+    .map(([mes, totalPedidos]) => ({
+      mes: Number(mes),
+      totalPedidos,
+    }))
+    .sort((a, b) => a.mes - b.mes);
+
+  const parseData = response.map((res) => res.totalPedidos);
+  res.send(parseData);
 };

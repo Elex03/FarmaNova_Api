@@ -23,9 +23,8 @@ const upload = multer({ storage: storage });
 export const createProduct = (req: Request, res: Response) => {
   upload.array("image")(req, res, async () => {
     try {
-      // Las imágenes se encuentran en req.files
       const imagenes = (req.files as Express.Multer.File[]).map(
-        (file) => file.path // Aquí estamos obteniendo las rutas de las imágenes
+        (file) => file.path 
       );
 
       const {
@@ -60,20 +59,21 @@ export const createProduct = (req: Request, res: Response) => {
               imagen: imagenes[index],
               forma_fk: Number(formaComprimida[index]),
               EstadoMedicamento: "DISPONIBLE",
-              EstadoMedicamentoExpirado: "EXPIRADO", // Replace with appropriate value
-              medicamento_fk: Number(idMedicamento[index]), // Ensure this is correctly mapped
-              requierePrescripcion: requiere === "true"? true:false
+              EstadoMedicamentoExpirado: "EXPIRADO", 
+              medicamento_fk: Number(idMedicamento[index]), 
+              requierePrescripcion: requiere[index] === "true"? true:false
             },
           });
 
           if (createVariant) {
+
             await Prismaclient.detallespedidos.create({
               data: {
                 variante_fk: createVariant.variante_pk,
                 pedidos_fk: createOrder.pedidos_pk,
                 cantidad: Number(cantidad[index]),
                 precioventa: Number(precioCompra[index]),
-                fecha_expiracion: new Date(fechaVencimiento[index]),
+                fecha_expiracion:  new Date(fechaVencimiento[index]),
               },
             });
           }
