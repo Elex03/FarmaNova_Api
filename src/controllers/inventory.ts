@@ -1,6 +1,12 @@
 import { Request, Response } from "express";
 import { Prismaclient } from "../constants/db";
 
+interface headers {
+  header: string;
+  key: string;
+  isNumeric?: boolean;
+  isDate?: boolean;
+}
 export const getSalesPerWeek = async (_req: Request, res: Response) => {
   const ventas = await Prismaclient.ventas.findMany({
     select: {
@@ -161,40 +167,46 @@ export const deleteOneMedicine = async (req: Request, res: Response) => {
   else res.send("Medicamento eliminado con exito");
 };
 
-export const getInventoryData = async (_req: Request, res: Response) => {
-  const data = await Prismaclient.variante.findMany({
-    select: {
-      variante_pk: true,
-      imagen: true,
-      precioVenta: true,
-      EstadoMedicamento: true,
-      fehcaexpiracion: true,
-      EstadoMedicamentoExpirado: true,
-      medicamento: {
-        select: {
-          nombreComercial: true,
-          concentracion: true,
+export const getInventoryData = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const skip = (page - 1) * limit;
+  console.time('query');
+  const [data, total] = await Promise.all([
+    Prismaclient.variante.findMany({
+      select: {
+        variante_pk: true,
+        imagen: true,
+        precioVenta: true,
+        EstadoMedicamento: true,
+        fehcaexpiracion: true,
+        EstadoMedicamentoExpirado: true,
+        medicamento: {
+          select: {
+            nombreComercial: true,
+            concentracion: true,
+          },
         },
-      },
-      stock: true,
-      formaFarmaceutica: {
-        select: {
-          nombre: true,
+        stock: true,
+        formaFarmaceutica: {
+          select: {
+            nombre: true,
+          },
         },
-      },
 
-      detallespedidos: {
-        select: {
-          fecha_expiracion: true,
-          precioventa: true,
-          pedidos: {
-            select: {
-              distribuidor: {
-                select: {
-                  nombrecompleto: true,
-                  empresa: {
-                    select: {
-                      descripcion: true,
+        detallespedidos: {
+          select: {
+            fecha_expiracion: true,
+            precioventa: true,
+            pedidos: {
+              select: {
+                distribuidor: {
+                  select: {
+                    nombrecompleto: true,
+                    empresa: {
+                      select: {
+                        descripcion: true,
+                      },
                     },
                   },
                 },
@@ -203,19 +215,24 @@ export const getInventoryData = async (_req: Request, res: Response) => {
           },
         },
       },
-    },
-  });
+      skip,
+      take: limit,
+    }),
 
-  const headers = [
+    Prismaclient.variante.count({}),
+  ]);
+  console.timeEnd('query');
+
+  const headers: headers[] = [
     { key: "descripcion", header: "Descripcion" },
     { key: "empresa", header: "Empresa" },
-    { key: "stock", header: "Stock" },
+    { key: "stock", header: "Stock" , isNumeric: true},
     { key: "estadoStock", header: "Estado del stock" },
-    { key: "fechaVencimiento", header: "Fecha Vencimiento" },
+    { key: "fechaVencimiento", header: "Fecha Vencimiento", isDate: true},
     { key: "EstadoMedicamentoExpirado", header: "Estado Medicamento Expirado" },
-    { key: "precioCompra", header: "Precio Compra" },
-    { key: "precioVenta", header: "Precio Venta" },
-    { key: "utilidadBruta", header: "Utilidad Bruta" },
+    { key: "precioCompra", header: "Precio Compra", isNumeric: true },
+    { key: "precioVenta", header: "Precio Venta",isNumeric: true },
+    { key: "utilidadBruta", header: "Utilidad Bruta",isNumeric: true },
   ];
 
   const dataParse = data.map((res) => ({
@@ -247,5 +264,11 @@ export const getInventoryData = async (_req: Request, res: Response) => {
       : "http://localhost:3000/apiFarmaNova/uploads/NF.jpg",
   }));
 
-  res.send({ data: dataParse, headers });
+  res.send({
+    data: dataParse,
+    headers,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  });
 };
