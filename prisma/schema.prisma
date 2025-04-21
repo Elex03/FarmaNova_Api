@@ -118,7 +118,6 @@ model Variante {
   detallespedidos           detallespedidos[]
   detallesventa             detallesventa[]
   devoluciones              Devoluciones[]
-  fehcaexpiracion           DateTime?                 @db.Date
   fechaCreacion             DateTime?                 @db.Date
   fechaModificacion         DateTime?                 @db.Date
 

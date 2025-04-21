@@ -6,6 +6,7 @@ interface headers {
   key: string;
   isNumeric?: boolean;
   isDate?: boolean;
+  isHighlight? : boolean;
 }
 export const getSalesPerWeek = async (_req: Request, res: Response) => {
   const ventas = await Prismaclient.ventas.findMany({
@@ -174,7 +175,6 @@ export const getInventoryData = async (_req: Request, res: Response) => {
       imagen: true,
       precioVenta: true,
       EstadoMedicamento: true,
-      fehcaexpiracion: true,
       EstadoMedicamentoExpirado: true,
       medicamento: {
         select: {
@@ -213,12 +213,13 @@ export const getInventoryData = async (_req: Request, res: Response) => {
   });
 
   const headers: headers[] = [
+
     { key: "descripcion", header: "Descripcion" },
     { key: "empresa", header: "Empresa" },
     { key: "stock", header: "Stock", isNumeric: true },
-    { key: "estadoStock", header: "Estado del stock" },
+    { key: "estadoStock", header: "Estado del stock", isHighlight: true },
     { key: "fechaVencimiento", header: "Fecha Vencimiento", isDate: true },
-    { key: "EstadoMedicamentoExpirado", header: "Estado Medicamento Expirado" },
+    { key: "EstadoMedicamentoExpirado", header: "Estado Medicamento Expirado", isHighlight: true },
     { key: "precioCompra", header: "Precio Compra", isNumeric: true },
     { key: "precioVenta", header: "Precio Venta", isNumeric: true },
     { key: "utilidadBruta", header: "Utilidad Bruta", isNumeric: true },

@@ -23,7 +23,10 @@ export const getDetailsSales = async (req: Request, res: Response) => {
   });
 
   const parseData = {
-    saleId: req.params.id,
+    id: req.params.id,
+    cliente: "Ana López",
+    fecha: "2025-04-21",
+    total: 150.0,
     productos: data.map((res) => ({
       nombre: res.variante.medicamento.nombreComercial,
       precio: Number(res.variante.precioVenta),
@@ -46,9 +49,11 @@ export const getSales = async (_req: Request, res: Response) => {
       fechaventa: true,
       detallesventa: {
         select: {
+          cantidad: true,
           variante: {
             select: {
               precioVenta: true,
+              _count: true,
             },
           },
         },
@@ -58,7 +63,9 @@ export const getSales = async (_req: Request, res: Response) => {
 
   const headers = [
     { key: "cliente", header: "Nombre del cliente" },
+    { key: "cantidad", header: "Cantidad de medicamentos vendidos" },
     { key: "fechaventa", header: "Fecha de la venta" },
+    { key: "horaventa", header: "Hora de la venta" },
     { key: "total", header: "Total de la venta" },
   ];
   const ventasConTotal = data.map((venta) => {
@@ -70,11 +77,15 @@ export const getSales = async (_req: Request, res: Response) => {
     return {
       id: venta.ventas_pk,
       cliente: venta.cliente.nombre,
+      cantidad: venta.detallesventa.reduce((acc, detalle) => {
+        return acc + detalle.cantidad;
+      }, 0),
       fechaventa: venta.fechaventa.toLocaleDateString("es-ES", {
         year: "numeric",
         month: "long",
         day: "2-digit",
       }),
+      horaventa: venta.fechaventa.toLocaleTimeString("es-ES"),
       total,
     };
   });
@@ -182,6 +193,7 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
     { key: "total", header: "Total del pedido" },
     { key: "fechaPedido", header: "Fecha de la orden" },
     { key: "fechaEntrega", header: "Fecha de entrega de la orden" },
+    { key: "hora", header: "Hora de entrega"}
   ];
 
   const response = data.map((pedido) => {
@@ -196,6 +208,7 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
       nombre: pedido.distribuidor.nombrecompleto,
       empresa: pedido.distribuidor.empresa.descripcion,
       fechaPedido: new Date(pedido.fechaPedido).toLocaleDateString("es-ES"),
+      hora: pedido.fechaEntrega ? new Date(pedido.fechaEntrega).toLocaleTimeString("es-ES") : null,
       estado: pedido.estado,
       total: totalPedido.toFixed(2),
       fechaEntrega: pedido.fechaEntrega
