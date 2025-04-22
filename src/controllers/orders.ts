@@ -157,6 +157,14 @@ export const getOrdersHistory = async (req: Request, res: Response) => {
   res.send(data);
 };
 
+interface headers {
+  header: string;
+  key: string;
+  isNumeric?: boolean;
+  isDate?: boolean;
+  isHighlight?: boolean;
+}
+
 export const getOneOrderHistory = async (req: Request, res: Response) => {
   const data = await Prismaclient.pedidos.findMany({
     select: {
@@ -186,14 +194,18 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
     },
   });
 
-  const headers = [
-    { key: "nombre", header: "Nombre" },
-    { key: "empresa", header: "Empresa" },
-    { key: "estado", header: "Estado del pedido" },
-    { key: "total", header: "Total del pedido" },
-    { key: "fechaPedido", header: "Fecha de la orden" },
-    { key: "fechaEntrega", header: "Fecha de entrega de la orden" },
-    { key: "hora", header: "Hora de entrega"}
+  const headers: headers[] = [
+    { key: "nombre", header: "Nombre" , isHighlight: true},
+    { key: "empresa", header: "Empresa" , isHighlight: true},
+    { key: "estado", header: "Estado del pedido", isHighlight: true },
+    { key: "total", header: "Total del pedido", isNumeric: true },
+    { key: "fechaPedido", header: "Fecha de la orden", isDate: true },
+    {
+      key: "fechaEntrega",
+      header: "Fecha de entrega de la orden",
+      isDate: true,
+    },
+    { key: "hora", header: "Hora de entrega" },
   ];
 
   const response = data.map((pedido) => {
@@ -208,7 +220,9 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
       nombre: pedido.distribuidor.nombrecompleto,
       empresa: pedido.distribuidor.empresa.descripcion,
       fechaPedido: new Date(pedido.fechaPedido).toLocaleDateString("es-ES"),
-      hora: pedido.fechaEntrega ? new Date(pedido.fechaEntrega).toLocaleTimeString("es-ES") : null,
+      hora: pedido.fechaEntrega
+        ? new Date(pedido.fechaEntrega).toLocaleTimeString("es-ES")
+        : null,
       estado: pedido.estado,
       total: totalPedido.toFixed(2),
       fechaEntrega: pedido.fechaEntrega
