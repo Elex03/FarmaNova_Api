@@ -1,8 +1,4 @@
-# Instala dependencias
+FROM node:18
+WORKDIR /app
+COPY . .
 RUN npm install
-
-# Compila si usas TypeScript
-RUN npm run dev
-
-# Comando para iniciar
-CMD ["npm", "start"]

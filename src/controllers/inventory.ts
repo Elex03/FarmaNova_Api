@@ -214,7 +214,7 @@ export const getInventoryData = async (_req: Request, res: Response) => {
 
   const headers: headers[] = [
 
-    { key: "descripcion", header: "Descripcion" },
+    { key: "descripcion", header: "Descripcion" , isHighlight: true},
     { key: "empresa", header: "Empresa" },
     { key: "stock", header: "Stock", isNumeric: true },
     { key: "estadoStock", header: "Estado del stock", isHighlight: true },
