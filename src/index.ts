@@ -1,18 +1,30 @@
-import express from 'express'
-import cors from 'cors'
-import appRouter from './router/'
-import morgan from 'morgan'
+import express from 'express';
+import cors from 'cors';
+import appRouter from './router/';
+import morgan from 'morgan';
+import http from 'http';
+import WebSocket from 'ws';
+import path from 'path';
+import { wssCallBack } from './utils/webSocket';
 
-const app = express();
+export const app = express();
+
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use('/apiFarmaNova', appRouter);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/favicon.ico', (_req, res) => {
-    res.send('Hello');
-})
+  res.send('Hello');
+});
 
-app.listen(3000, () => {
-    console.log('Api listen on 3000 port');
-})
+wss.on('connection', (ws) => wssCallBack(ws));
+
+server.listen(3000, () => {
+  console.log('API escuchando en el puerto 3000');
+});
+
+
