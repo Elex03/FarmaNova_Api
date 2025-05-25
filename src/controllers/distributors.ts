@@ -73,22 +73,6 @@ export const getdistributors = async (_req: Request, res: Response) => {
 
   res.send({data: dataParse, headers});
 };
-
-export const getListDistributors = async (_req: Request, res: Response) => {
-  const data = await Prismaclient.distribuidor.findMany({
-    select: {
-      distribuidor_pk: true,
-      nombrecompleto: true,
-    },
-  });
-
-  const dataParse = data.map((res) => ({
-    id: res.distribuidor_pk,
-    label: res.nombrecompleto,
-  }));
-  res.send(dataParse);
-};
-
 export const getCompanies = async (_req: Request, res: Response) => {
   const data = await Prismaclient.empresa.findMany({
     select: {

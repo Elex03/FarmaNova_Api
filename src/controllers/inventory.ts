@@ -76,6 +76,7 @@ export const getTherapeutiAaction = async (_req: Request, res: Response) => {
   const dataParse = data.map((res) => ({
     id: res.accionTerapeutica_pk,
     label: res.descripcion,
+    value: res.descripcion,
   }));
   res.send(dataParse);
 };
@@ -158,30 +159,15 @@ export const getCategory = async (_req: Request, res: Response) => {
   res.send(groupedData);
 };
 
-export const deleteOneMedicine = async (req: Request, res: Response) => {
-  const data = await Prismaclient.medicamentos.delete({
-    where: {
-      medicamento_pk: +req.params.id,
-    },
-  });
-  if (!data) res.send("No se ha podido eliminar el medicamento");
-  else res.send("Medicamento eliminado con exito");
-};
-
 export const getInventoryData = async (_req: Request, res: Response) => {
-  const data = await Prismaclient.variante.findMany({
+  const data = await Prismaclient.medicamento.findMany({
     select: {
-      variante_pk: true,
+      medicamento_pk: true,
       imagen: true,
       precioVenta: true,
       EstadoMedicamento: true,
       EstadoMedicamentoExpirado: true,
-      medicamento: {
-        select: {
-          nombreComercial: true,
-          concentracion: true,
-        },
-      },
+      descripcion: true,
       stock: true,
       formaFarmaceutica: {
         select: {
@@ -226,13 +212,8 @@ export const getInventoryData = async (_req: Request, res: Response) => {
   ];
 
   const dataParse = data.map((res) => ({
-    id: res.variante_pk,
-    descripcion:
-      res.medicamento.nombreComercial +
-      " " +
-      res.medicamento.concentracion +
-      " " +
-      res.formaFarmaceutica.nombre,
+    id: res.medicamento_pk,
+    descripcion: res.descripcion + ' ' +  res.formaFarmaceutica.nombre,
     stock: res.stock,
     estadoStock: res.EstadoMedicamento,
     fechaVencimiento: res.detallespedidos.map((dataDist) =>

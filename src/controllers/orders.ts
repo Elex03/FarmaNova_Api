@@ -6,13 +6,9 @@ export const getDetailsSales = async (req: Request, res: Response) => {
     select: {
       cantidad: true,
 
-      variante: {
+      medicamento: {
         select: {
-          medicamento: {
-            select: {
-              nombreComercial: true,
-            },
-          },
+          descripcion: true,
           precioVenta: true,
         },
       },
@@ -28,10 +24,10 @@ export const getDetailsSales = async (req: Request, res: Response) => {
     fecha: "2025-04-21",
     total: 150.0,
     productos: data.map((res) => ({
-      nombre: res.variante.medicamento.nombreComercial,
-      precio: Number(res.variante.precioVenta),
+      nombre: res.medicamento.descripcion,
+      precio: Number(res.medicamento.precioVenta),
       cantidad: res.cantidad,
-      total: Number(res.variante.precioVenta) * res.cantidad,
+      total: Number(res.medicamento.precioVenta) * res.cantidad,
     })),
   };
   res.send(parseData);
@@ -50,7 +46,7 @@ export const getSales = async (_req: Request, res: Response) => {
       detallesventa: {
         select: {
           cantidad: true,
-          variante: {
+          medicamento: {
             select: {
               precioVenta: true,
               _count: true,
@@ -70,7 +66,7 @@ export const getSales = async (_req: Request, res: Response) => {
   ];
   const ventasConTotal = data.map((venta) => {
     const total = venta.detallesventa.reduce((acc, detalle) => {
-      const precioMedicamentos = detalle.variante.precioVenta || 0;
+      const precioMedicamentos = detalle.medicamento.precioVenta || 0;
       return acc + precioMedicamentos.toNumber();
     }, 0);
 
@@ -136,13 +132,9 @@ export const getOrdersHistory = async (req: Request, res: Response) => {
         select: {
           cantidad: true,
 
-          variante: {
+          medicamento: {
             select: {
-              medicamento: {
-                select: {
-                  nombreComercial: true,
-                },
-              },
+              descripcion: true,
               precioVenta: true,
             },
           },
@@ -195,8 +187,8 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
   });
 
   const headers: headers[] = [
-    { key: "nombre", header: "Nombre" , isHighlight: true},
-    { key: "empresa", header: "Empresa" , isHighlight: true},
+    { key: "nombre", header: "Nombre", isHighlight: true },
+    { key: "empresa", header: "Empresa", isHighlight: true },
     { key: "estado", header: "Estado del pedido", isHighlight: true },
     { key: "total", header: "Total del pedido", isNumeric: true },
     { key: "fechaPedido", header: "Fecha de la orden", isDate: true },

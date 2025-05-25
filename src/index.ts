@@ -15,6 +15,7 @@ const wss = new WebSocket.Server({ server });
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
+
 app.use('/apiFarmaNova', appRouter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/favicon.ico', (_req, res) => {

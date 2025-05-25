@@ -27,12 +27,12 @@ appRouter.get('/users', async (req, res) => {
     const skip = (page - 1) * limit;
   
     const [users, total] = await Promise.all([
-      Prismaclient.variante.findMany({
+      Prismaclient.medicamento.findMany({
         skip,
         take: limit,
         orderBy: { fechaCreacion: 'desc' },
       }),
-      Prismaclient.variante.count({ where: { EstadoMedicamento: 'DISPONIBLE' } }),
+      Prismaclient.medicamento.count({ where: { EstadoMedicamento: 'DISPONIBLE' } }),
     ]);
   
     res.json({
