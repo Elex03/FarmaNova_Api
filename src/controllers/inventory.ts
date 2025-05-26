@@ -166,6 +166,11 @@ export const getInventoryData = async (_req: Request, res: Response) => {
       precioCompra: true,
       imagen: true,
       precioVenta: true,
+      empresa: {
+        select: {
+          descripcion: true,
+        }
+      },
       EstadoMedicamento: true,
       EstadoMedicamentoExpirado: true,
       descripcion: true,
@@ -222,9 +227,7 @@ export const getInventoryData = async (_req: Request, res: Response) => {
     fechaVencimiento: res.detallespedidos.map((dataDist) =>
       dataDist.fecha_expiracion.toISOString().split("T")[0].replace(/-/g, "/")
     )[0],
-    empresa: res.detallespedidos.map(
-      (dataDist) => dataDist.pedidos.distribuidor.empresa.descripcion
-    )[0],
+    empresa: res.empresa.descripcion,
     precioCompra: res.precioCompra,
     precioVenta: res.precioVenta,
     EstadoMedicamentoExpirado: res.EstadoMedicamentoExpirado,
