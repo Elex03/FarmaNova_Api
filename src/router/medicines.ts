@@ -12,7 +12,7 @@ medicineRouter.get("/catalogMedicine", getCatalogMedicines);
 medicineRouter.get("/getTherapeuticAction", getTherapeutiAaction);
 medicineRouter.post(
   "/createMedicine",
-  upload.single("uploaded_file"),
+  upload.single("imagen"),
   createMedicine
 );
 

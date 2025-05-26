@@ -51,6 +51,8 @@ model empresa {
   empresa_pk   Int            @id(map: "empresa_pk") @default(autoincrement())
   descripcion  String         @db.VarChar(50)
   distribuidor distribuidor[]
+
+  medicamento medicamento[]
 }
 
 model empleado {
@@ -86,10 +88,12 @@ model medicamento {
   medicamento_pk            Int                       @id @default(autoincrement())
   codigoBarra               String?
   requierePrescripcion      Boolean                   @default(false)
+  empresa_fk                Int
   EstadoMedicamento         EstadoMedicamento
   EstadoMedicamentoExpirado EstadoMedicamentoExpirado
   forma_fk                  Int
   precioVenta               Decimal                   @default(0.00)
+  precioCompra              Decimal                   @default(0.00)
   cantidadMinima            Int                       @default(0)
   cantidadMaxima            Int                       @default(0)
   via                       String
@@ -102,6 +106,7 @@ model medicamento {
   detallespedidos           detallespedidos[]
   detallesventa             detallesventa[]
   formaFarmaceutica         FormaFarmaceutica         @relation(fields: [forma_fk], references: [formaFarmaceutica_pk])
+  empresa                   empresa                   @relation(fields: [empresa_fk], references: [empresa_pk])
   medicamentoSintoma        medicamentoSintoma[]
 
   @@index([fechaCreacion], map: "fechaCreacion")

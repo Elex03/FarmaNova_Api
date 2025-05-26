@@ -6,7 +6,7 @@ interface headers {
   key: string;
   isNumeric?: boolean;
   isDate?: boolean;
-  isHighlight? : boolean;
+  isHighlight?: boolean;
 }
 export const getSalesPerWeek = async (_req: Request, res: Response) => {
   const ventas = await Prismaclient.ventas.findMany({
@@ -163,6 +163,7 @@ export const getInventoryData = async (_req: Request, res: Response) => {
   const data = await Prismaclient.medicamento.findMany({
     select: {
       medicamento_pk: true,
+      precioCompra: true,
       imagen: true,
       precioVenta: true,
       EstadoMedicamento: true,
@@ -178,7 +179,6 @@ export const getInventoryData = async (_req: Request, res: Response) => {
       detallespedidos: {
         select: {
           fecha_expiracion: true,
-          precioventa: true,
           pedidos: {
             select: {
               distribuidor: {
@@ -199,13 +199,16 @@ export const getInventoryData = async (_req: Request, res: Response) => {
   });
 
   const headers: headers[] = [
-
-    { key: "descripcion", header: "Descripcion" , isHighlight: true},
+    { key: "descripcion", header: "Descripcion", isHighlight: true },
     { key: "empresa", header: "Empresa" },
     { key: "stock", header: "Stock", isNumeric: true },
     { key: "estadoStock", header: "Estado del stock", isHighlight: true },
     { key: "fechaVencimiento", header: "Fecha Vencimiento", isDate: true },
-    { key: "EstadoMedicamentoExpirado", header: "Estado Medicamento Expirado", isHighlight: true },
+    {
+      key: "EstadoMedicamentoExpirado",
+      header: "Estado Medicamento Expirado",
+      isHighlight: true,
+    },
     { key: "precioCompra", header: "Precio Compra", isNumeric: true },
     { key: "precioVenta", header: "Precio Venta", isNumeric: true },
     { key: "utilidadBruta", header: "Utilidad Bruta", isNumeric: true },
@@ -213,7 +216,7 @@ export const getInventoryData = async (_req: Request, res: Response) => {
 
   const dataParse = data.map((res) => ({
     id: res.medicamento_pk,
-    descripcion: res.descripcion + ' ' +  res.formaFarmaceutica.nombre,
+    descripcion: res.descripcion + " " + res.formaFarmaceutica.nombre,
     stock: res.stock,
     estadoStock: res.EstadoMedicamento,
     fechaVencimiento: res.detallespedidos.map((dataDist) =>
@@ -222,17 +225,11 @@ export const getInventoryData = async (_req: Request, res: Response) => {
     empresa: res.detallespedidos.map(
       (dataDist) => dataDist.pedidos.distribuidor.empresa.descripcion
     )[0],
-    precioCompra: res.detallespedidos.map(
-      (dataDist) => dataDist.precioventa
-    )[0],
+    precioCompra: res.precioCompra,
     precioVenta: res.precioVenta,
     EstadoMedicamentoExpirado: res.EstadoMedicamentoExpirado,
-    utilidadBruta: res.detallespedidos.map(
-      (dataDist) => Number(res.precioVenta) - Number(dataDist.precioventa)
-    )[0],
-    imagenUrl: res.imagen
-      ? `${res.imagen}`
-      : "./uploads/NF.jpg",
+    utilidadBruta: Number(res.precioVenta) - Number(res.precioCompra),
+    imagenUrl: res.imagen ? `${res.imagen}` : "./uploads/NF.jpg",
   }));
 
   res.send({
