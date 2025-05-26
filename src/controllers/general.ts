@@ -12,3 +12,4 @@ export const createCompany = async (req: Request, res: Response) => {
 
   res.send("Companies was created");
 };
+
