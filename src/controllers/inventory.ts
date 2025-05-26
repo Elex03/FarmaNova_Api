@@ -231,8 +231,8 @@ export const getInventoryData = async (_req: Request, res: Response) => {
       (dataDist) => Number(res.precioVenta) - Number(dataDist.precioventa)
     )[0],
     imagenUrl: res.imagen
-      ? `http://localhost:3000/apiFarmaNova/${res.imagen}`
-      : "http://localhost:3000/apiFarmaNova/uploads/NF.jpg",
+      ? `${res.imagen}`
+      : "./uploads/NF.jpg",
   }));
 
   res.send({
