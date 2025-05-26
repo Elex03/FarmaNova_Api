@@ -11,6 +11,8 @@ export const app = express();
 
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+const PORT = process.env.PORT || 4000;
+
 
 app.use(cors());
 app.use(morgan('dev'));
@@ -24,8 +26,8 @@ app.get('/favicon.ico', (_req, res) => {
 
 wss.on('connection', (ws) => wssCallBack(ws));
 
-server.listen(3000, () => {
-  console.log('API escuchando en el puerto 3000');
+server.listen(PORT, () => {
+  console.log(`API escuchando en el puerto ${PORT} `);
 });
 
 
