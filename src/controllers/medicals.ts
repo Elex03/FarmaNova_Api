@@ -15,10 +15,10 @@ export const createMedicine = async (req: Request, res: Response) => {
     codigo,
   } = req.body;
 
-  // Parseo de arrays enviados como JSON strings
   let accioTera: number[] = [];
-  // let sintomas: number[] = [];
+  let sintomas: string[] = [];
 
+  console.log("Sintomas Map:", sintomas);
   try {
     if (typeof req.body.accioTera === "string") {
       accioTera = JSON.parse(req.body.accioTera);
@@ -26,11 +26,11 @@ export const createMedicine = async (req: Request, res: Response) => {
       accioTera = req.body.accioTera.map(Number);
     }
 
-    // if (typeof req.body.sintomas === "string") {
-    //   sintomas = JSON.parse(req.body.sintomas);
-    // } else if (Array.isArray(req.body.sintomas)) {
-    //   sintomas = req.body.sintomas.map(Number);
-    // }
+    if (typeof req.body.sintomas === "string") {
+      sintomas = JSON.parse(req.body.sintomas);
+    } else if (Array.isArray(req.body.sintomas)) {
+      sintomas = req.body.sintomas.map(String);
+    }
   } catch (err) {
     res.status(400).json({ error: "Error al parsear arrays" });
   }
@@ -74,15 +74,98 @@ export const createMedicine = async (req: Request, res: Response) => {
         });
       }
 
-      // if (sintomas.length > 0) {
-      //   await tx.medicamentoSintoma.createMany({
-      //     data: sintomas.map((sintomaId) => ({
-      //       medicamento_fk: medicine.medicamento_pk,
-      //       sintoma_fk: Number(sintomaId),
-      //     })),
-      //   });
-      // }
+      if (sintomas.length > 0) {
+        // 1. Buscar síntomas existentes
+        const sintomasDb = await tx.sintomas.findMany({
+          where: {
+            descripcion: {
+              in: sintomas.map((s) =>
+                typeof s === "string"
+                  ? s.toLowerCase()
+                  : String(s).toLowerCase()
+              ),
+            },
+          },
+          select: {
+            sintoma_pk: true,
+            descripcion: true,
+          },
+        });
 
+        const sintomasExistentes = new Set(
+          sintomasDb.map((s) => s.descripcion.toLowerCase())
+        );
+
+        // 2. Filtrar síntomas que no existen
+        const sintomasFaltantes = sintomas.filter((s) => {
+          const descripcion =
+            typeof s === "string" ? s.toLowerCase() : String(s).toLowerCase();
+          return !sintomasExistentes.has(descripcion);
+        });
+
+        // 3. Crear síntomas faltantes
+        if (sintomasFaltantes.length > 0) {
+          await tx.sintomas.createMany({
+            data: sintomasFaltantes.map((descripcion) => ({
+              descripcion:
+                typeof descripcion === "string"
+                  ? descripcion
+                  : String(descripcion),
+            })),
+          });
+        }
+
+        // 4. Volver a obtener todos los síntomas actualizados
+        const todosLosSintomasDb = await tx.sintomas.findMany({
+          where: {
+            descripcion: {
+              in: sintomas.map((s) =>
+                typeof s === "string"
+                  ? s.toLowerCase()
+                  : String(s).toLowerCase()
+              ),
+            },
+          },
+          select: {
+            sintoma_pk: true,
+            descripcion: true,
+          },
+        });
+
+        // 5. Mapear descripción -> sintoma_pk
+        const sintomasMap = new Map(
+          todosLosSintomasDb.map(
+            (s: { descripcion: string; sintoma_pk: any }) => [
+              s.descripcion.toLowerCase(),
+              s.sintoma_pk,
+            ]
+          )
+        );
+
+        const relaciones = sintomas
+          .map((descripcion: string | number) => {
+            const key =
+              typeof descripcion === "string"
+                ? descripcion.toLowerCase()
+                : String(descripcion).toLowerCase();
+            const sintomaId = sintomasMap.get(key);
+            if (!sintomaId) return null;
+            return {
+              medicamento_fk: medicine.medicamento_pk,
+              sintomas_fk: Number(sintomaId),
+            };
+          })
+          .filter(
+            (rel): rel is { medicamento_fk: number; sintomas_fk: number } =>
+              rel !== null
+          );
+        console.log(sintomas);
+        if (relaciones.length > 0) {
+          await tx.medicamentoSintoma.createMany({
+            data: relaciones,
+          });
+        }
+      }
       return medicine;
     });
 
@@ -167,4 +250,21 @@ export const getMedicineSelect = async (_req: Request, res: Response) => {
   }));
 
   res.send(dataParse);
+};
+
+export const getSymptoms = async (_req: Request, res: Response) => {
+  const data = await Prismaclient.sintomas.findMany({
+    select: {
+      sintoma_pk: true,
+      descripcion: true, 
+    }, 
+  });
+
+  const dataParse = data.map((res) => ({
+    id: res.sintoma_pk,
+    text: res.descripcion,
+  }));
+
+  res.send(dataParse);
+
 };

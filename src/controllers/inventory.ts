@@ -119,7 +119,7 @@ export const getInventoryData = async (_req: Request, res: Response) => {
       empresa: {
         select: {
           descripcion: true,
-        }
+        },
       },
       EstadoMedicamento: true,
       EstadoMedicamentoExpirado: true,
@@ -128,6 +128,16 @@ export const getInventoryData = async (_req: Request, res: Response) => {
       formaFarmaceutica: {
         select: {
           nombre: true,
+        },
+      },
+      medicamentoSintoma: {
+        select: {
+          sintomas: {
+            select: {
+              sintoma_pk: true,
+              descripcion: true,
+            },
+          },
         },
       },
 
@@ -183,6 +193,7 @@ export const getInventoryData = async (_req: Request, res: Response) => {
     EstadoMedicamentoExpirado: res.EstadoMedicamentoExpirado,
     utilidadBruta: Number(res.precioVenta) - Number(res.precioCompra),
     imagenUrl: res.imagen ? `${res.imagen}` : "./uploads/NF.jpg",
+    sintomas: res.medicamentoSintoma.map((item) => item.sintomas.descripcion),
   }));
 
   res.send({
@@ -191,8 +202,10 @@ export const getInventoryData = async (_req: Request, res: Response) => {
   });
 };
 
-
-export const getMedicalsCloseToExpire = async (_req: Request, res: Response) => {
+export const getMedicalsCloseToExpire = async (
+  _req: Request,
+  res: Response
+) => {
   const data = await Prismaclient.medicamento.findMany({
     select: {
       medicamento_pk: true,
@@ -212,8 +225,11 @@ export const getMedicalsCloseToExpire = async (_req: Request, res: Response) => 
   const today = new Date();
   const closeToExpire = data.filter((med) => {
     const expirationDate = med.detallespedidos[0]?.fecha_expiracion;
-    return expirationDate && (expirationDate.getTime() - today.getTime()) < 30 * 24 * 60 * 60 * 1000; 
+    return (
+      expirationDate &&
+      expirationDate.getTime() - today.getTime() < 30 * 24 * 60 * 60 * 1000
+    );
   });
 
   res.send(closeToExpire);
-}
+};

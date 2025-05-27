@@ -61,7 +61,6 @@ export const getdistributors = async (_req: Request, res: Response) => {
       }) ?? "No hay pedidos",
     id: res.distribuidor_pk,
   }));
-
   res.send({data: dataParse, headers});
 };
 export const getCompanies = async (_req: Request, res: Response) => {
