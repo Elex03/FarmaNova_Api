@@ -5,21 +5,12 @@ export const createDistributor = async (req: Request, res: Response) => {
   try {
     const { nombre, telefono, empresa } = req.body;
 
-    const empresa_valid = await Prismaclient.empresa.findFirst({
-      where: { descripcion: empresa },
-    });
-
-    if (!empresa_valid) {
-      res.status(400).json({
-        message: `La empresa '${empresa}' no está registrada.`,
-      });
-    }
 
     const data = await Prismaclient.distribuidor.create({
       data: {
         nombrecompleto: nombre,
         telefono,
-        empresa_fk: Number(empresa_valid?.empresa_pk),
+        empresa_fk: Number(empresa),
       },
     });
 
@@ -67,7 +58,7 @@ export const getdistributors = async (_req: Request, res: Response) => {
         year: "numeric",
         month: "long",
         day: "2-digit",
-      }),
+      }) ?? "No hay pedidos",
     id: res.distribuidor_pk,
   }));
 

@@ -22,13 +22,6 @@ model accionTera {
   categoriamedicamentos accionmedicamentos[]
 }
 
-model cliente {
-  cliente_pk Int      @id(map: "cliente_pk") @default(autoincrement())
-  cedula     String   @db.VarChar(25)
-  nombre     String   @default("No brindo") @db.VarChar(50)
-  ventas     ventas[]
-}
-
 model detallesventa {
   detallesventa_pk Int         @id(map: "detallesventa_pk") @default(autoincrement())
   cantidad         Int
@@ -132,10 +125,10 @@ model ventas {
   ventas_pk     Int             @id(map: "ventas_pk") @default(autoincrement())
   fechaventa    DateTime        @db.Date
   empleado_fk   Int
-  cliente_fk    Int
+  total         Float           @db.Real @default(0.00)
   estado        Estado
   detallesventa detallesventa[]
-  cliente       cliente         @relation(fields: [cliente_fk], references: [cliente_pk], onDelete: NoAction, onUpdate: NoAction, map: "ventas_cliente_fk")
+  pagaCon       Float           @db.Real
   empleado      empleado        @relation(fields: [empleado_fk], references: [empleado_pk], onDelete: NoAction, onUpdate: NoAction, map: "ventas_empleado_fk")
 }
 

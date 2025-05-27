@@ -81,56 +81,6 @@ export const getTherapeutiAaction = async (_req: Request, res: Response) => {
   res.send(dataParse);
 };
 
-// export const getInventory = async (_req: Request, res: Response) => {
-//   const data = await Prismaclient.variante.findMany({
-//     select: {
-//       medicamento: {
-//         select: {
-//           nombreComercial: true,
-//         },
-//       },
-//       stock: true,
-//       concentracion: true,
-//       presentacion: {
-//         select: {
-//           nombre: true,
-//         },
-//       },
-//       detallespedidos: {
-//         select: {
-//           fecha_expiracion: true,
-//           distribuidor: {
-//             select: {
-//               nombrecompleto: true,
-//             },
-//           },
-//         },
-//       },
-//     },
-//   });
-
-//   const dataParse = data.map((res) => ({
-//     descripcion:
-//       (res.medicamento.nombreComercial ?? "a") +
-//       " " +
-//       (res.presentacion.nombre ?? "a") +
-//       " " +
-//       res.concentracion,
-//     stock: res.stock,
-//     distribuidor: res.detallespedidos.map(
-//       (dataDist) => dataDist.distribuidor.nombrecompleto
-//     )[0],
-//     fechaVencimiento: new Date(
-//       res.detallespedidos.map((dataDist) => dataDist.fecha_expiracion)[0]
-//     ).toLocaleDateString("es-ES", {
-//       year: "numeric",
-//       month: "long",
-//       day: "2-digit",
-//     }),
-//   }));
-
-//   res.json(dataParse);
-// };
 export const getCategory = async (_req: Request, res: Response) => {
   const data = await Prismaclient.accionTera.findMany({
     select: {
@@ -240,3 +190,30 @@ export const getInventoryData = async (_req: Request, res: Response) => {
     headers,
   });
 };
+
+
+export const getMedicalsCloseToExpire = async (_req: Request, res: Response) => {
+  const data = await Prismaclient.medicamento.findMany({
+    select: {
+      medicamento_pk: true,
+      descripcion: true,
+      stock: true,
+      precioCompra: true,
+      precioVenta: true,
+      imagen: true,
+      detallespedidos: {
+        select: {
+          fecha_expiracion: true,
+        },
+      },
+    },
+  });
+
+  const today = new Date();
+  const closeToExpire = data.filter((med) => {
+    const expirationDate = med.detallespedidos[0]?.fecha_expiracion;
+    return expirationDate && (expirationDate.getTime() - today.getTime()) < 30 * 24 * 60 * 60 * 1000; 
+  });
+
+  res.send(closeToExpire);
+}

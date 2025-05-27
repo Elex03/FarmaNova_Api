@@ -128,7 +128,7 @@ export const getOneMedicine = async (req: Request, res: Response) => {
     nombre: MedicineData?.descripcion,
     imagen: MedicineData?.imagen,
     via: MedicineData?.via,
-    precioCompra: Number( MedicineData?.precioCompra),
+    precioCompra: Number(MedicineData?.precioCompra),
     precioVenta: Number(MedicineData?.precioVenta),
     minStock: MedicineData?.cantidadMinima,
     maxStock: MedicineData?.cantidadMaxima,
@@ -136,11 +136,35 @@ export const getOneMedicine = async (req: Request, res: Response) => {
     codigo: MedicineData?.codigoBarra,
     fabricante: MedicineData?.empresa.empresa_pk,
     presentacion: MedicineData?.formaFarmaceutica.formaFarmaceutica_pk,
-    accioTera: MedicineData?.accionmedicamentos.map((item) => item.accionTera.accionTerapeutica_pk),
-  }
+    accioTera: MedicineData?.accionmedicamentos.map(
+      (item) => item.accionTera.accionTerapeutica_pk
+    ),
+  };
 
   if (!MedicineData) {
     res.status(404).json({ error: "Medicina no encontrada" });
   }
+  res.send(dataParse);
+};
+
+export const getMedicineSelect = async (_req: Request, res: Response) => {
+  const data = await Prismaclient.medicamento.findMany({
+    select: {
+      medicamento_pk: true,
+      descripcion: true,
+      formaFarmaceutica: {
+        select: {
+          nombre: true,
+        },
+      },
+    },
+  });
+
+  const dataParse = data.map((res) => ({
+    id: res.medicamento_pk,
+    label: res.descripcion + " - " + res.formaFarmaceutica.nombre,
+    value: res.descripcion + " - " + res.formaFarmaceutica.nombre,
+  }));
+
   res.send(dataParse);
 };

@@ -1,14 +1,19 @@
 import { Router } from "express";
 import { getCatalogMedicines } from "../controllers/medicine";
-import { getTherapeutiAaction } from "../controllers/inventory";
-import { createMedicine, getOneMedicine } from "../controllers/medicals";
+import { getMedicalsCloseToExpire, getTherapeutiAaction } from "../controllers/inventory";
+import { createMedicine, getMedicineSelect, getOneMedicine } from "../controllers/medicals";
 import { upload } from "../utils/multer";
 
 const medicineRouter = Router();
 
 medicineRouter.get("/catalogMedicine", getCatalogMedicines);
 medicineRouter.get("/getTherapeuticAction", getTherapeutiAaction);
-medicineRouter.post("/createMedicine", upload.single("imagen"), createMedicine);
 medicineRouter.get("/getOneMedicine/:id", getOneMedicine);
+medicineRouter.get("/getMedicalsCloseToExpire", getMedicalsCloseToExpire);
+medicineRouter.get("/getMedicineSelect", getMedicineSelect);
+
+medicineRouter.post("/createMedicine", upload.single("imagen"), createMedicine);
+
+
 
 export default medicineRouter;

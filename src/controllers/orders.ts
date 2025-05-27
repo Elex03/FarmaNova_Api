@@ -36,12 +36,8 @@ export const getDetailsSales = async (req: Request, res: Response) => {
 export const getSales = async (_req: Request, res: Response) => {
   const data = await Prismaclient.ventas.findMany({
     select: {
+      total: true,
       ventas_pk: true,
-      cliente: {
-        select: {
-          nombre: true,
-        },
-      },
       fechaventa: true,
       detallesventa: {
         select: {
@@ -58,21 +54,14 @@ export const getSales = async (_req: Request, res: Response) => {
   });
 
   const headers = [
-    { key: "cliente", header: "Nombre del cliente" },
     { key: "cantidad", header: "Cantidad de medicamentos vendidos" },
     { key: "fechaventa", header: "Fecha de la venta" },
     { key: "horaventa", header: "Hora de la venta" },
     { key: "total", header: "Total de la venta" },
   ];
   const ventasConTotal = data.map((venta) => {
-    const total = venta.detallesventa.reduce((acc, detalle) => {
-      const precioMedicamentos = detalle.medicamento.precioVenta || 0;
-      return acc + precioMedicamentos.toNumber();
-    }, 0);
-
     return {
       id: venta.ventas_pk,
-      cliente: venta.cliente.nombre,
       cantidad: venta.detallesventa.reduce((acc, detalle) => {
         return acc + detalle.cantidad;
       }, 0),
@@ -82,7 +71,7 @@ export const getSales = async (_req: Request, res: Response) => {
         day: "2-digit",
       }),
       horaventa: venta.fechaventa.toLocaleTimeString("es-ES"),
-      total,
+      total: venta.total.toFixed(2),
     };
   });
 

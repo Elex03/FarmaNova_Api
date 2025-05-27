@@ -7,7 +7,6 @@ import medicineRouter from "./medicines";
 import generalRouter from "./generalRouter";
 import path from "path";
 import express from "express";
-// import { Prismaclient } from "../constants/db";
 
 const appRouter = Router();
 
@@ -17,11 +16,8 @@ appRouter.use('/inventory', inventoryRouter);
 appRouter.use('/distributors', distributorsRouter);
 appRouter.use('/orders', orderRoute);
 appRouter.use('/medicines', medicineRouter);
-appRouter.use('/general', generalRouter)
+appRouter.use('/general', generalRouter);
 appRouter.use("/uploads", express.static(path.join(__dirname, "../../uploads")))
 
-
-// appRouter.get('/users', );
-  
 
 export default appRouter;
