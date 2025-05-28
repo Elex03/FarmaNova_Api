@@ -32,12 +32,12 @@ model detallesventa {
 }
 
 model distribuidor {
-  distribuidor_pk Int       @id(map: "distribuidor_pk") @default(autoincrement())
-  nombrecompleto  String    @db.VarChar(50)
-  telefono        String    @db.VarChar(10)
+  distribuidor_pk Int               @id(map: "distribuidor_pk") @default(autoincrement())
+  nombrecompleto  String            @db.VarChar(50)
+  telefono        String            @db.VarChar(10)
   empresa_fk      Int
-  empresa         empresa   @relation(fields: [empresa_fk], references: [empresa_pk], onDelete: NoAction, onUpdate: NoAction, map: "distribuidor_empresa_fk")
-  pedidos         pedidos[]
+  empresa         empresa           @relation(fields: [empresa_fk], references: [empresa_pk], onDelete: NoAction, onUpdate: NoAction, map: "distribuidor_empresa_fk")
+  detallespedidos detallespedidos[] @relation(map: "distribuidormedicamento_distribuidor_fk")
 }
 
 model empresa {
@@ -136,25 +136,25 @@ model pedidos {
   pedidos_pk      Int               @id(map: "pedidos_pk") @default(autoincrement())
   fechaPedido     DateTime          @db.Date
   empleado_fk     Int
-  distribuidor_fk Int
   estado          Estado
   fechaEntrega    DateTime?         @db.Date
   detallespedidos detallespedidos[]
-  distribuidor    distribuidor      @relation(fields: [distribuidor_fk], references: [distribuidor_pk], onDelete: NoAction, onUpdate: NoAction, map: "distribuidormedicamento_distribuidor_fk")
   empleado        empleado          @relation(fields: [empleado_fk], references: [empleado_pk], onDelete: NoAction, onUpdate: NoAction, map: "ventas_empleado_fk")
 }
 
 model detallespedidos {
-  detallespedidos_pk Int         @id @default(autoincrement())
-  fecha_expiracion   DateTime    @db.Date
+  detallespedidos_pk Int          @id @default(autoincrement())
+  fecha_expiracion   DateTime     @db.Date
   cantidadDeEmpaque  Int
   cantidadPorEmpaque Int
   pedidos_fk         Int
+  distribuidor_fk    Int
   total              Float
   NroLote            String
   medicamento_fk     Int
-  medicamentos       medicamento @relation(fields: [medicamento_fk], references: [medicamento_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_medicamentos_fk")
-  pedidos            pedidos     @relation(fields: [pedidos_fk], references: [pedidos_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_pedidos_fk")
+  distribuidor       distribuidor @relation(fields: [distribuidor_fk], references: [distribuidor_pk], onDelete: NoAction, onUpdate: NoAction, map: "distribuidormedicamento_distribuidor_fk")
+  medicamentos medicamento @relation(fields: [medicamento_fk], references: [medicamento_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_medicamentos_fk")
+  pedidos      pedidos     @relation(fields: [pedidos_fk], references: [pedidos_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_pedidos_fk")
 }
 
 enum Rol {

@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { Prismaclient } from "../../../constants/db";
-
 export const createMakeSales = async (req: Request, res: Response) => {
   const { pagaCon, detalle, empleado_fk, total } = req.body;
 
@@ -26,6 +25,8 @@ export const createMakeSales = async (req: Request, res: Response) => {
         data: saleDetails,
       });
 
+      const detalleConStock = [];
+
       for (const item of detalle) {
         await tx.medicamento.update({
           where: { medicamento_pk: item.medicamento_fk },
@@ -35,14 +36,39 @@ export const createMakeSales = async (req: Request, res: Response) => {
             },
           },
         });
+
+        const medicamentoActualizado = await tx.medicamento.findUnique({
+          where: { medicamento_pk: item.medicamento_fk },
+          select: {
+            imagen: true,
+            medicamento_pk: true,
+            descripcion: true,
+            stock: true,
+          },
+        });
+
+        if (medicamentoActualizado) {
+          detalleConStock.push({
+            imageUrl:  medicamentoActualizado.imagen,
+            medicamento_fk: medicamentoActualizado.medicamento_pk,
+            nombre: medicamentoActualizado.descripcion,
+            cantidadVendida: item.cantidad,
+            stockRestante: medicamentoActualizado.stock,
+          });
+        }
       }
 
-      return sale;
+      return {
+        ventaId: sale.ventas_pk,
+        total: sale.total,
+        detalle: detalleConStock,
+      };
     });
 
-    res
-      .status(201)
-      .json({ message: "Venta creada exitosamente", sale: result });
+    res.status(201).json({
+      message: "Venta creada exitosamente",
+      ...result,
+    });
   } catch (error) {
     console.error("Error creating sale:", error);
     res.status(500).json({ error: "Error al crear la venta" });

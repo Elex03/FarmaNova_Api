@@ -19,15 +19,11 @@ export const getMakeSales = async (_req: Request, res: Response) => {
       },
       detallespedidos: {
         select: {
-          pedidos: {
+          distribuidor: {
             select: {
-              distribuidor: {
+              empresa: {
                 select: {
-                  empresa: {
-                    select: {
-                      descripcion: true,
-                    },
-                  },
+                  descripcion: true,
                 },
               },
             },
@@ -57,7 +53,7 @@ export const getMakeSales = async (_req: Request, res: Response) => {
       (tera) => tera.accionTera.descripcion
     )[0],
     fabricante: res.detallespedidos.map(
-      (fabri) => fabri.pedidos.distribuidor.empresa.descripcion
+      (fabri) => fabri.distribuidor.empresa.descripcion
     )[0],
     stock: res.stock,
     precioVenta: Number(res.precioVenta),

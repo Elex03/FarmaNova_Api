@@ -78,43 +78,6 @@ export const getSales = async (_req: Request, res: Response) => {
   res.send({ data: ventasConTotal, headers });
 };
 
-export const getOrders = async (_req: Request, res: Response) => {
-  const data = await Prismaclient.pedidos.findMany({
-    select: {
-      distribuidor: {
-        select: {
-          nombrecompleto: true,
-          empresa: true,
-        },
-      },
-      detallespedidos: {
-        select: {
-          medicamentos: {
-            select: {
-              precioVenta: true
-            }
-          }
-        },
-      },
-      fechaPedido: true,
-    },
-  });
-
-  const dataParse = data.map((res) => ({
-    fechaPedido: res.fechaPedido.toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "2-digit",
-    }),
-    nombreDistribuidor: res.distribuidor.nombrecompleto,
-    empresa: res.distribuidor.empresa,
-    total: res.detallespedidos
-      .map((rest) => rest.medicamentos.precioVenta)
-      .reduce((acc, curr) => Number(acc) + Number(curr), 0),
-  }));
-  res.json(dataParse);
-};
-
 export const getOrdersHistory = async (req: Request, res: Response) => {
   const idSales = req.params.id;
   const data = await Prismaclient.ventas.findMany({
@@ -151,9 +114,16 @@ interface headers {
 }
 
 export const getOneOrderHistory = async (req: Request, res: Response) => {
-  const data = await Prismaclient.pedidos.findMany({
+  const data = await Prismaclient.detallespedidos.findMany({
     select: {
-      estado: true,
+      pedidos: {
+        select: {
+          estado: true,
+          fechaPedido: true,
+          fechaEntrega: true,
+        },
+      },
+
       distribuidor: {
         select: {
           distribuidor_pk: true,
@@ -165,18 +135,12 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
           },
         },
       },
-      fechaPedido: true,
-      fechaEntrega: true,
-      detallespedidos: {
+      medicamentos: {
         select: {
-          medicamentos: {
-            select: {
-              precioVenta: true
-            }
-          },
-          cantidadDeEmpaque: true,
+          precioVenta: true,
         },
       },
+      cantidadDeEmpaque: true,
     },
     where: {
       distribuidor_fk: Number(req.params.id),
@@ -200,22 +164,22 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
   const response = data.map((pedido) => {
     // Sumamos los precios de venta de los detalles del pedido
     let totalPedido = 0;
-    pedido.detallespedidos.forEach((detalle) => {
-      totalPedido += Number(detalle.medicamentos.precioVenta) * detalle.cantidadDeEmpaque; // Asegúrate de que 'precioventa' sea un número
-    });
+    Number(pedido.medicamentos.precioVenta) * pedido.cantidadDeEmpaque;
 
     return {
       id: pedido.distribuidor.distribuidor_pk,
       nombre: pedido.distribuidor.nombrecompleto,
       empresa: pedido.distribuidor.empresa.descripcion,
-      fechaPedido: new Date(pedido.fechaPedido).toLocaleDateString("es-ES"),
-      hora: pedido.fechaEntrega
-        ? new Date(pedido.fechaEntrega).toLocaleTimeString("es-ES")
+      fechaPedido: new Date(pedido.pedidos.fechaPedido).toLocaleDateString(
+        "es-ES"
+      ),
+      hora: pedido.pedidos.fechaEntrega
+        ? new Date(pedido.pedidos.fechaEntrega).toLocaleTimeString("es-ES")
         : null,
-      estado: pedido.estado,
+      estado: pedido.pedidos.estado,
       total: totalPedido.toFixed(2),
-      fechaEntrega: pedido.fechaEntrega
-        ? new Date(pedido.fechaEntrega).toLocaleDateString("es-ES")
+      fechaEntrega: pedido.pedidos.fechaEntrega
+        ? new Date(pedido.pedidos.fechaEntrega).toLocaleDateString("es-ES")
         : null, // Si 'fechaEntrega' está disponible
     };
   });
@@ -224,9 +188,13 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
 };
 
 export const getOrdersGraph = async (req: Request, res: Response) => {
-  const data = await Prismaclient.pedidos.findMany({
+  const data = await Prismaclient.detallespedidos.findMany({
     select: {
-      fechaPedido: true,
+      pedidos: {
+        select: {
+          fechaPedido: true,
+        },
+      },
     },
     where: {
       distribuidor_fk: Number(req.params.id),
@@ -240,7 +208,7 @@ export const getOrdersGraph = async (req: Request, res: Response) => {
 
   // Contamos los pedidos por mes
   data.forEach((pedido) => {
-    const mes = new Date(pedido.fechaPedido).getMonth(); // 0 = enero
+    const mes = new Date(pedido.pedidos.fechaPedido).getMonth(); // 0 = enero
     pedidosPorMes[mes] += 1;
   });
 
@@ -253,4 +221,81 @@ export const getOrdersGraph = async (req: Request, res: Response) => {
 
   const parseData = response.map((res) => res.totalPedidos);
   res.send(parseData);
+};
+
+export const registerOrder = async (req: Request, res: Response) => {
+  try {
+    const detalles = req.body;
+
+    if (!Array.isArray(detalles) || detalles.length === 0) {
+      res.status(400).json({ message: "No se enviaron detalles del pedido." });
+    }
+
+    const resultado = await Prismaclient.$transaction(async (tx) => {
+      const pedido = await tx.pedidos.create({
+        data: {
+          fechaPedido: new Date(),
+          estado: "COMPLETADO",
+          empleado: {
+            connect: { empleado_pk: 1 },
+          },
+        },
+      });
+
+      const detallesConPedido = detalles.map(
+        (detalle: {
+          distribuidor: any;
+          nombreMedicamento: any;
+          fecha_expiracion: string | number | Date;
+          cantidadDeEmpaque: string;
+          cantidadPorEmpaque: string;
+          nroLote: any;
+          total: string;
+        }) => ({
+          distribuidor_fk: Number(detalle.distribuidor),
+          medicamento_fk: Number(detalle.nombreMedicamento),
+          fecha_expiracion: new Date(detalle.fecha_expiracion),
+          cantidadDeEmpaque: parseInt(detalle.cantidadDeEmpaque),
+          cantidadPorEmpaque: parseInt(detalle.cantidadPorEmpaque),
+          NroLote: detalle.nroLote,
+          total: parseFloat(detalle.total),
+          pedidos_fk: pedido.pedidos_pk,
+        })
+      );
+
+      await tx.detallespedidos.createMany({
+        data: detallesConPedido,
+      });
+
+      // Actualizar el stock de cada medicamento
+      for (const detalle of detallesConPedido) {
+        const unidadesTotales =
+          detalle.cantidadDeEmpaque * detalle.cantidadPorEmpaque;
+
+        await tx.medicamento.update({
+          where: {
+            medicamento_pk: detalle.medicamento_fk,
+          },
+          data: {
+            stock: {
+              increment: unidadesTotales,
+            },
+          },
+        });
+      }
+      return { pedido, detalles: detallesConPedido };
+    });
+
+    res.status(201).json({
+      message: "Pedido y detalles registrados correctamente",
+      pedido: resultado.pedido,
+      detalles: resultado.detalles,
+    });
+  } catch (error) {
+    console.error("Error al registrar el pedido:", error);
+    res.status(500).json({
+      message: "Hubo un error al registrar el pedido",
+      error,
+    });
+  }
 };

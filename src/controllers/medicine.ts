@@ -17,9 +17,7 @@ export const getCatalogMedicines = async (_req: Request, res: Response) => {
         },
         detallespedidos: {
           select: {
-            pedidos: {
-              select: {
-                distribuidor: {
+            distribuidor: {
                   select: {
                     empresa: {
                       select: {
@@ -28,8 +26,6 @@ export const getCatalogMedicines = async (_req: Request, res: Response) => {
                     },
                   },
                 },
-              },
-            },
           },
         },
       },
@@ -45,7 +41,7 @@ export const getCatalogMedicines = async (_req: Request, res: Response) => {
       precio: Number(res.precioVenta),
       id: res.medicamento_pk,
       empresa:
-        res.detallespedidos[0]?.pedidos.distribuidor.empresa.descripcion ||
+        res.detallespedidos[0]?.distribuidor.empresa.descripcion ||
         "No disponible",
       requierePrescripcion: res.requierePrescripcion,
     }));

@@ -28,10 +28,15 @@ export const getdistributors = async (_req: Request, res: Response) => {
       nombrecompleto: true,
       empresa: true,
       telefono: true,
-      pedidos: {
+      detallespedidos: {
         select: {
-          fechaPedido: true,
-          pedidos_pk: true,
+          pedidos: {
+            select:{
+
+              fechaPedido: true,
+              pedidos_pk: true,
+            }
+          }
         },
       },
     },
@@ -51,8 +56,8 @@ export const getdistributors = async (_req: Request, res: Response) => {
     telefono: res.telefono,
     label: res.nombrecompleto,
     value: res.nombrecompleto,
-    ultimoPedido: res.pedidos
-      .map((res) => res.fechaPedido)
+    ultimoPedido: res.detallespedidos
+      .map((res) => res.pedidos.fechaPedido)
       .slice(-1)[0]
       ?.toLocaleDateString("es-ES", {
         year: "numeric",
@@ -83,9 +88,7 @@ export const getdistributorsGraphic = async (_req: Request, res: Response) => {
   const data = await Prismaclient.detallespedidos.findMany({
     select: {
       cantidadDeEmpaque: true,
-      pedidos: {
-        select: {
-          distribuidor: {
+      distribuidor: {
             
             select: {
               empresa: 
@@ -97,15 +100,13 @@ export const getdistributorsGraphic = async (_req: Request, res: Response) => {
               },
             },
           },
-        },
-      },
     },
   });
   
   const grouped: Record<number, { distribuidor: string; distribuidor_pk: number; cantidad: number }> = {};
   
   for (const item of data) {
-    const distribuidor = item.pedidos.distribuidor;
+    const distribuidor = item.distribuidor;
     const id = distribuidor.empresa.empresa_pk;
   
     if (!grouped[id]) {

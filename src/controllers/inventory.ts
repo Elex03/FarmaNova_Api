@@ -144,18 +144,14 @@ export const getInventoryData = async (_req: Request, res: Response) => {
       detallespedidos: {
         select: {
           fecha_expiracion: true,
-          pedidos: {
+          distribuidor: {
             select: {
-              distribuidor: {
+              nombrecompleto: true,
+              empresa: {
                 select: {
-                  nombrecompleto: true,
-                  empresa: {
-                    select: {
-                      descripcion: true,
-                    },
-                  },
-                },
-              },
+                  descripcion: true
+                }
+              }
             },
           },
         },

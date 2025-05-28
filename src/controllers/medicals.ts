@@ -194,6 +194,15 @@ export const getOneMedicine = async (req: Request, res: Response) => {
           formaFarmaceutica_pk: true,
         },
       },
+      medicamentoSintoma: {
+        select: {
+          sintomas: {
+            select: {
+              descripcion: true,
+            },
+          },
+        },
+      },
       accionmedicamentos: {
         select: {
           accionTera: {
@@ -219,6 +228,9 @@ export const getOneMedicine = async (req: Request, res: Response) => {
     codigo: MedicineData?.codigoBarra,
     fabricante: MedicineData?.empresa.empresa_pk,
     presentacion: MedicineData?.formaFarmaceutica.formaFarmaceutica_pk,
+    sintomas: MedicineData?.medicamentoSintoma.map(
+      (item) => item.sintomas.descripcion
+    ),
     accioTera: MedicineData?.accionmedicamentos.map(
       (item) => item.accionTera.accionTerapeutica_pk
     ),
@@ -279,8 +291,272 @@ export const getMedicineStock = async (_req: Request, res: Response) => {
   });
 
   const parseData = data.map((res) => ({
-    descripcion: res.descripcion, 
-    cantidad: res.stock
-  }))
+    descripcion: res.descripcion,
+    cantidad: res.stock,
+  }));
   res.send(parseData);
+};
+
+export const updateMedicine = async (req: Request, res: Response) => {
+  const {
+    medicamentoId,
+    nombre,
+    via,
+    presentacion,
+    precioCompra,
+    fabricante,
+    precioVenta,
+    minStock,
+    maxStock,
+    requierePrescripcion,
+    codigo,
+  } = req.body;
+
+  let accioTera: number[] = [];
+  let sintomas: string[] = [];
+
+  try {
+    if (typeof req.body.accioTera === "string") {
+      accioTera = JSON.parse(req.body.accioTera);
+    } else if (Array.isArray(req.body.accioTera)) {
+      accioTera = req.body.accioTera.map(Number);
+    }
+
+    if (typeof req.body.sintomas === "string") {
+      sintomas = JSON.parse(req.body.sintomas);
+    } else if (Array.isArray(req.body.sintomas)) {
+      sintomas = req.body.sintomas.map(String);
+    }
+  } catch (err) {
+    res.status(400).json({ error: "Error al parsear arrays" });
+  }
+
+  try {
+    const result = await Prismaclient.$transaction(async (tx) => {
+      const updatedMedicine = await tx.medicamento.update({
+        where: {
+          medicamento_pk: Number(medicamentoId),
+        },
+        data: {
+          descripcion: nombre,
+          imagen: req.file ? `uploads/${req.file.filename}` : undefined,
+          via,
+          precioCompra: Number(precioCompra),
+          precioVenta: Number(precioVenta),
+          cantidadMinima: Number(minStock),
+          cantidadMaxima: Number(maxStock),
+          fechaModificacion: new Date(),
+          requierePrescripcion: requierePrescripcion === "true" ? true : false,
+          codigoBarra: codigo,
+          empresa: {
+            connect: {
+              empresa_pk: Number(fabricante),
+            },
+          },
+          formaFarmaceutica: {
+            connect: {
+              formaFarmaceutica_pk: Number(presentacion),
+            },
+          },
+        },
+      });
+
+      // 2. Actualizar acciones terapéuticas
+      await tx.accionmedicamentos.deleteMany({
+        where: { medicamento_fk: updatedMedicine.medicamento_pk },
+      });
+
+      if (accioTera.length > 0) {
+        await tx.accionmedicamentos.createMany({
+          data: accioTera.map((accionId) => ({
+            medicamento_fk: updatedMedicine.medicamento_pk,
+            accionTerapeutica_fk: Number(accionId),
+          })),
+        });
+      }
+
+      // 3. Actualizar síntomas
+      await tx.medicamentoSintoma.deleteMany({
+        where: { medicamento_fk: updatedMedicine.medicamento_pk },
+      });
+
+      if (sintomas.length > 0) {
+        const sintomasDb = await tx.sintomas.findMany({
+          where: {
+            descripcion: {
+              in: sintomas.map((s) =>
+                typeof s === "string"
+                  ? s.toLowerCase()
+                  : String(s).toLowerCase()
+              ),
+            },
+          },
+        });
+
+        const sintomasExistentes = new Set(
+          sintomasDb.map((s) => s.descripcion.toLowerCase())
+        );
+
+        const sintomasFaltantes = sintomas.filter((s) => {
+          const d =
+            typeof s === "string" ? s.toLowerCase() : String(s).toLowerCase();
+          return !sintomasExistentes.has(d);
+        });
+
+        if (sintomasFaltantes.length > 0) {
+          await tx.sintomas.createMany({
+            data: sintomasFaltantes.map((descripcion) => ({
+              descripcion:
+                typeof descripcion === "string"
+                  ? descripcion
+                  : String(descripcion),
+            })),
+          });
+        }
+
+        const todosLosSintomasDb = await tx.sintomas.findMany({
+          where: {
+            descripcion: {
+              in: sintomas.map((s) =>
+                typeof s === "string"
+                  ? s.toLowerCase()
+                  : String(s).toLowerCase()
+              ),
+            },
+          },
+        });
+
+        const sintomasMap = new Map(
+          todosLosSintomasDb.map((s) => [
+            s.descripcion.toLowerCase(),
+            s.sintoma_pk,
+          ])
+        );
+
+        const relaciones = sintomas
+          .map((descripcion) => {
+            const key =
+              typeof descripcion === "string"
+                ? descripcion.toLowerCase()
+                : String(descripcion).toLowerCase();
+            const sintomaId = sintomasMap.get(key);
+            if (!sintomaId) return null;
+            return {
+              medicamento_fk: updatedMedicine.medicamento_pk,
+              sintomas_fk: Number(sintomaId),
+            };
+          })
+          .filter(
+            (rel): rel is { medicamento_fk: number; sintomas_fk: number } =>
+              rel !== null
+          );
+
+        if (relaciones.length > 0) {
+          await tx.medicamentoSintoma.createMany({
+            data: relaciones,
+          });
+        }
+      }
+
+      return updatedMedicine;
+    });
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("Error al actualizar medicina:", err);
+    res.status(500).json({ error: "Error al actualizar medicina" });
+  }
+};
+export const getMedicineSales = async (req: Request, res: Response) => {
+  try {
+    const {
+      order = "desc",
+      limit = "10",
+      filterByDate = "false",
+      from,
+      to,
+    } = req.query as {
+      order?: "asc" | "desc";
+      limit?: string;
+      filterByDate?: string;
+      from?: string;
+      to?: string;
+    };
+
+    const shouldFilterByDate = filterByDate === "true";
+    const limitNumber = limit === "" ? undefined : parseInt(limit, 10) || 10; // Por defecto 10
+
+    const data = await Prismaclient.detallesventa.groupBy({
+      by: ["medicamento_fk"],
+      _count: {
+        medicamento_fk: true,
+      },
+      orderBy: {
+        _count: {
+          medicamento_fk: order,
+        },
+      },
+      take: limitNumber,
+      where: shouldFilterByDate
+        ? {
+            ventas: {
+              fechaventa: {
+                gte: from ? new Date(from) : undefined,
+                lte: to ? new Date(to) : undefined,
+              },
+            },
+          }
+        : undefined,
+    });
+
+    const medicamentos = await Promise.all(
+      data.map(async (item) => {
+        const med = await Prismaclient.medicamento.findUnique({
+          where: { medicamento_pk: item.medicamento_fk },
+          select: {
+            descripcion: true,
+            empresa: {
+              select: {
+                descripcion: true,
+              },
+            },
+            detallesventa: {
+              select: {
+                ventas: {
+                  select: {
+                    fechaventa: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        return {
+          medicamentoId: item.medicamento_fk,
+          nombre: med?.descripcion || "Desconocido",
+          empresa: med?.empresa.descripcion,
+          cantidadVendida: item._count.medicamento_fk,
+          fecha: med?.detallesventa
+            .map((res) => res.ventas.fechaventa)[0]
+            .toLocaleDateString("es-ES", {
+              year: "numeric",
+              month: "long",
+              day: "2-digit",
+            }),
+        };
+      })
+    );
+    const headers = [
+      { key: "nombre", header: "Descripcion" },
+      { key: "cantidadVendida", header: "Cantidades vendidas" },
+      { key: "empresa", header: "Fabricante" },
+      { key: "fecha", header: "Fecha de la venta" },
+    ];
+
+    res.json({ data: medicamentos, headers });
+  } catch (error) {
+    console.error("Error al obtener las ventas de medicamentos:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
 };
