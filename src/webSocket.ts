@@ -1,7 +1,7 @@
 import WebSocket from "ws";
 import fs from "fs";
 import path from "path";
-import { app } from "../index";
+import { app } from "./index";
 
 import http from 'http';
 

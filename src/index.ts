@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import http from 'http';
 import WebSocket from 'ws';
 import path from 'path';
-import { wssCallBack } from './utils/webSocket';
+import { wssCallBack } from './webSocket';
 
 export const app = express();
 

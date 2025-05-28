@@ -269,3 +269,18 @@ export const getSymptoms = async (_req: Request, res: Response) => {
 
   res.send(dataParse);
 };
+
+export const getMedicineStock = async (_req: Request, res: Response) => {
+  const data = await Prismaclient.medicamento.findMany({
+    select: {
+      descripcion: true,
+      stock: true,
+    },
+  });
+
+  const parseData = data.map((res) => ({
+    descripcion: res.descripcion, 
+    cantidad: res.stock
+  }))
+  res.send(parseData);
+};
