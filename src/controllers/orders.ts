@@ -89,7 +89,11 @@ export const getOrders = async (_req: Request, res: Response) => {
       },
       detallespedidos: {
         select: {
-          precioventa: true,
+          medicamentos: {
+            select: {
+              precioVenta: true
+            }
+          }
         },
       },
       fechaPedido: true,
@@ -105,7 +109,7 @@ export const getOrders = async (_req: Request, res: Response) => {
     nombreDistribuidor: res.distribuidor.nombrecompleto,
     empresa: res.distribuidor.empresa,
     total: res.detallespedidos
-      .map((rest) => rest.precioventa)
+      .map((rest) => rest.medicamentos.precioVenta)
       .reduce((acc, curr) => Number(acc) + Number(curr), 0),
   }));
   res.json(dataParse);
@@ -165,8 +169,12 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
       fechaEntrega: true,
       detallespedidos: {
         select: {
-          precioventa: true,
-          cantidad: true,
+          medicamentos: {
+            select: {
+              precioVenta: true
+            }
+          },
+          cantidadDeEmpaque: true,
         },
       },
     },
@@ -193,7 +201,7 @@ export const getOneOrderHistory = async (req: Request, res: Response) => {
     // Sumamos los precios de venta de los detalles del pedido
     let totalPedido = 0;
     pedido.detallespedidos.forEach((detalle) => {
-      totalPedido += detalle.precioventa * detalle.cantidad; // Asegúrate de que 'precioventa' sea un número
+      totalPedido += Number(detalle.medicamentos.precioVenta) * detalle.cantidadDeEmpaque; // Asegúrate de que 'precioventa' sea un número
     });
 
     return {

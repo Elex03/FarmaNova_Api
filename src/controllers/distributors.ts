@@ -82,7 +82,7 @@ export const getCompanies = async (_req: Request, res: Response) => {
 export const getdistributorsGraphic = async (_req: Request, res: Response) => {
   const data = await Prismaclient.detallespedidos.findMany({
     select: {
-      cantidad: true,
+      cantidadDeEmpaque: true,
       pedidos: {
         select: {
           distribuidor: {
@@ -116,7 +116,7 @@ export const getdistributorsGraphic = async (_req: Request, res: Response) => {
       };
     }
   
-    grouped[id].cantidad += item.cantidad;
+    grouped[id].cantidad += item.cantidadDeEmpaque;
   }
   
   const result = Object.values(grouped);
