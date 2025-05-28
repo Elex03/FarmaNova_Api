@@ -234,6 +234,7 @@ export const getMedicineSelect = async (_req: Request, res: Response) => {
   const data = await Prismaclient.medicamento.findMany({
     select: {
       medicamento_pk: true,
+      precioVenta: true,
       descripcion: true,
       formaFarmaceutica: {
         select: {
@@ -247,6 +248,7 @@ export const getMedicineSelect = async (_req: Request, res: Response) => {
     id: res.medicamento_pk,
     label: res.descripcion + " - " + res.formaFarmaceutica.nombre,
     value: res.descripcion + " - " + res.formaFarmaceutica.nombre,
+    precio: Number(res.precioVenta),
   }));
 
   res.send(dataParse);
@@ -256,8 +258,8 @@ export const getSymptoms = async (_req: Request, res: Response) => {
   const data = await Prismaclient.sintomas.findMany({
     select: {
       sintoma_pk: true,
-      descripcion: true, 
-    }, 
+      descripcion: true,
+    },
   });
 
   const dataParse = data.map((res) => ({
@@ -266,5 +268,4 @@ export const getSymptoms = async (_req: Request, res: Response) => {
   }));
 
   res.send(dataParse);
-
 };

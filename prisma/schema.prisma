@@ -125,7 +125,7 @@ model ventas {
   ventas_pk     Int             @id(map: "ventas_pk") @default(autoincrement())
   fechaventa    DateTime        @db.Date
   empleado_fk   Int
-  total         Float           @db.Real @default(0.00)
+  total         Float           @default(0.00) @db.Real
   estado        Estado
   detallesventa detallesventa[]
   pagaCon       Float           @db.Real
@@ -145,14 +145,16 @@ model pedidos {
 }
 
 model detallespedidos {
-  detallespedidos_pk Int         @id @default(autoincrement())
-  fecha_expiracion   DateTime    @db.Date
-  cantidad           Int
+  detallespedidos_pk Int      @id @default(autoincrement())
+  fecha_expiracion   DateTime @db.Date
+  cantidadDeEmpaque  Int
+  cantidadPorEmpaque Int
   pedidos_fk         Int
-  precioventa        Float       @db.Real
-  medicamento_fk     Int
-  medicamentos       medicamento @relation(fields: [medicamento_fk], references: [medicamento_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_medicamentos_fk")
-  pedidos            pedidos     @relation(fields: [pedidos_fk], references: [pedidos_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_pedidos_fk")
+  total              Float
+  NroLote        String
+  medicamento_fk Int
+  medicamentos   medicamento @relation(fields: [medicamento_fk], references: [medicamento_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_medicamentos_fk")
+  pedidos        pedidos     @relation(fields: [pedidos_fk], references: [pedidos_pk], onDelete: NoAction, onUpdate: NoAction, map: "detallespedidos_pedidos_fk")
 }
 
 enum Rol {
