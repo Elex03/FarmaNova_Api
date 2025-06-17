@@ -139,7 +139,7 @@ model pedidos {
   estado          Estado
   fechaEntrega    DateTime?         @db.Date
   detallespedidos detallespedidos[]
-  empleado        empleado          @relation(fields: [empleado_fk], references: [empleado_pk], onDelete: NoAction, onUpdate: NoAction, map: "ventas_empleado_fk")
+  empleado        empleado          @relation(fields: [empleado_fk], references: [empleado_pk], onDelete: NoAction, onUpdate: NoAction, map: "pedidos_empleado_fk")
 }
 
 model detallespedidos {

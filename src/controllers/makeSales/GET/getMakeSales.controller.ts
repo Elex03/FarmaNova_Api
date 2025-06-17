@@ -8,6 +8,12 @@ export const getMakeSales = async (_req: Request, res: Response) => {
       stock: true,
       precioVenta: true,
       descripcion: true,
+      imagen: true,
+      empresa: {
+        select: {
+          descripcion: true
+        }
+      },
       accionmedicamentos: {
         select: {
           accionTera: {
@@ -49,12 +55,11 @@ export const getMakeSales = async (_req: Request, res: Response) => {
   const parseData = data.map((res) => ({
     id: res.medicamento_pk,
     descripcion: res.descripcion,
+    imagenUrl: res.imagen ? `${res.imagen}` : "./uploads/NF.jpg",
     accionTera: res.accionmedicamentos.map(
       (tera) => tera.accionTera.descripcion
     )[0],
-    fabricante: res.detallespedidos.map(
-      (fabri) => fabri.distribuidor.empresa.descripcion
-    )[0],
+    fabricante: res.empresa.descripcion,
     stock: res.stock,
     precioVenta: Number(res.precioVenta),
   }));
