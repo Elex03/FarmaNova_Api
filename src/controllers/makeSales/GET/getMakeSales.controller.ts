@@ -11,8 +11,8 @@ export const getMakeSales = async (_req: Request, res: Response) => {
       imagen: true,
       empresa: {
         select: {
-          descripcion: true
-        }
+          descripcion: true,
+        },
       },
       accionmedicamentos: {
         select: {
@@ -64,4 +64,57 @@ export const getMakeSales = async (_req: Request, res: Response) => {
     precioVenta: Number(res.precioVenta),
   }));
   res.send({ data: parseData, headers: Headers });
+};
+
+export const getItemPerCode = async (req: Request, res: Response) => {
+  const code = req.params.code;
+
+  const data = await Prismaclient.medicamento.findFirst({
+    select: {
+      medicamento_pk: true,
+      stock: true,
+      precioVenta: true,
+      descripcion: true,
+      imagen: true,
+      empresa: {
+        select: {
+          descripcion: true,
+        },
+      },
+      accionmedicamentos: {
+        select: {
+          accionTera: {
+            select: {
+              descripcion: true,
+            },
+          },
+        },
+      },
+    },
+    where: {
+      codigoBarra: code,
+    },
+  });
+  if (!data) {
+    res.status(200).send({
+      success: false,
+      message: "Producto no encontrado",
+      data: null,
+    });
+  } else {
+    res.status(200).send({
+      success: true,
+      data: {
+        id: data.medicamento_pk,
+        name: data.descripcion,
+        
+        // accionTera:
+        //   data.accionmedicamentos?.[0]?.accionTera?.descripcion ||
+        //   "No especificado",
+        // fabricante: data.empresa?.descripcion || "Desconocido",
+        stock: data.stock,
+        price: Number(data.precioVenta),
+      },
+    });
+  }
 };
