@@ -12,17 +12,14 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 4000;
 
-// Middlewares
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Rutas
 app.use('/apiFarmaNova', appRouter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
-// WebSocket
 wss.on('connection', (ws) => {
   console.log("Nuevo cliente conectado");
 
@@ -90,6 +87,6 @@ wss.on('connection', (ws) => {
 });
 
 // Iniciar servidor
-server.listen(PORT, () => {
+server.listen(3000, () => {
   console.log(`API escuchando en el puerto ${PORT}`);
 });
