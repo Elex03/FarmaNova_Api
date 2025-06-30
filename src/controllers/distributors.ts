@@ -103,7 +103,7 @@ export const getdistributorsGraphic = async (_req: Request, res: Response) => {
     },
   });
   
-  const grouped: Record<number, { distribuidor: string; distribuidor_pk: number; cantidad: number }> = {};
+  const grouped: Record<number, { descripcion: string; distribuidor_pk: number; cantidad: number }> = {};
   
   for (const item of data) {
     const distribuidor = item.distribuidor;
@@ -111,7 +111,7 @@ export const getdistributorsGraphic = async (_req: Request, res: Response) => {
   
     if (!grouped[id]) {
       grouped[id] = {
-        distribuidor: distribuidor.empresa.descripcion,
+        descripcion: distribuidor.empresa.descripcion,
         distribuidor_pk: id,
         cantidad: 0,
       };
@@ -119,8 +119,11 @@ export const getdistributorsGraphic = async (_req: Request, res: Response) => {
   
     grouped[id].cantidad += item.cantidadDeEmpaque;
   }
-  
-  const result = Object.values(grouped);
+  const result = Object.values(grouped).map((item) => ({
+    id: item.distribuidor_pk,
+    descripcion: item.descripcion,
+    cantidad: item.cantidad,
+  }));
 
-  res.send(result);
+  res.send( result);
 };

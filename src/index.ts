@@ -1,11 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import appRouter from './router/';
+import appRouter from './router';
 import morgan from 'morgan';
 import http from 'http';
 import WebSocket from 'ws';
 import path from 'path';
-
+import swaggerUi from 'swagger-ui-express'
+import swaggerSpec from './utils/swagger'
 import { handleMessage } from './controllers/ws/ws.controller';
 
 const app = express();
@@ -19,6 +20,8 @@ app.use(express.json());
 
 app.use('/apiFarmaNova', appRouter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 wss.on("connection", (ws) => {
   console.log("Nuevo cliente conectado");
@@ -44,3 +47,5 @@ wss.on("connection", (ws) => {
 server.listen(PORT, () => {
   console.log(`API escuchando en el puerto ${PORT}`);
 });
+
+

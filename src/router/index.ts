@@ -23,3 +23,13 @@ appRouter.use("/uploads", express.static(path.join(__dirname, "../../uploads")))
 
 
 export default appRouter;
+
+/**
+ * @swagger
+ * components: 
+ *   securitySchemes: 
+ *     apiAuth: 
+ *        type: apiKey
+ *        in: header
+ *        name: authorization
+ */

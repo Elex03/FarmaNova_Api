@@ -127,60 +127,100 @@ export const createBackup = async (req: Request, res: Response) => {
   });
 };
 
+// export const restoreBackup = async (req: Request, res: Response) => {
+//   const { nombre } = req.body;
+
+//   if (!nombre) {
+//     res.status(400).json({ message: "Nombre del backup requerido" });
+//   }
+
+//   const filePath = path.join("./backups", nombre);
+
+//   if (!fs.existsSync(filePath)) {
+//     res.status(404).json({ message: "El archivo de backup no existe" });
+//   }
+
+//   const dropCommand = `docker exec ${CONTAINER_NAME} psql -U ${DB_USER} -d ${DB_NAME} -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"`;
+
+//   exec(dropCommand, (dropError) => {
+//     if (dropError) {
+//       console.error("Error al limpiar la base de datos:", dropError);
+//       res
+//         .status(500)
+//         .json({
+//           message: "Error al limpiar la base de datos",
+//           error: dropError,
+//         });
+//     }
+
+//     // Restaurar el backup usando stdin
+//     const restore = spawn("docker", [
+//       "exec",
+//       "-i",
+//       CONTAINER_NAME,
+//       "psql",
+//       "-U",
+//       DB_USER,
+//       "-d",
+//       DB_NAME,
+//     ]);
+
+//     // Leer el archivo y enviarlo al stdin del proceso
+//     const fileStream = fs.createReadStream(filePath);
+//     fileStream.pipe(restore.stdin);
+
+//     restore.on("exit", (code) => {
+//       if (code === 0) {
+//         res.status(200).json({ message: "Backup restaurado exitosamente" });
+//       } else {
+//         res.status(500).json({ message: "Error al restaurar el backup", code });
+//       }
+//     });
+
+//     restore.on("error", (error) => {
+//       console.error("Error al ejecutar psql:", error);
+//       res.status(500).json({ message: "Error al ejecutar psql", error });
+//     });
+//   });
+// };
 export const restoreBackup = async (req: Request, res: Response) => {
   const { nombre } = req.body;
 
   if (!nombre) {
-    res.status(400).json({ message: "Nombre del backup requerido" });
+     res.status(400).json({ message: "Nombre del backup requerido" });
   }
 
   const filePath = path.join("./backups", nombre);
 
   if (!fs.existsSync(filePath)) {
-    res.status(404).json({ message: "El archivo de backup no existe" });
+     res.status(404).json({ message: "El archivo de backup no existe" });
   }
 
-  // Comando para limpiar la base de datos antes de restaurar
-  const dropCommand = `docker exec ${CONTAINER_NAME} psql -U ${DB_USER} -d ${DB_NAME} -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"`;
+  const restore = spawn("psql", [
+    "-h", process.env.DB_HOST!,
+    "-U", process.env.DB_USER!,
+    "-d", process.env.DB_NAME!,
+    "-p", process.env.DB_PORT || "5432",
+  ], {
+    env: {
+      ...process.env,
+      PGPASSWORD: process.env.DB_PASSWORD!,
+    },
+  });
 
-  exec(dropCommand, (dropError) => {
-    if (dropError) {
-      console.error("Error al limpiar la base de datos:", dropError);
-      res
-        .status(500)
-        .json({
-          message: "Error al limpiar la base de datos",
-          error: dropError,
-        });
+  const fileStream = fs.createReadStream(filePath);
+  fileStream.pipe(restore.stdin);
+
+  restore.on("exit", (code) => {
+    if (code === 0) {
+      res.status(200).json({ message: "Backup restaurado exitosamente" });
+    } else {
+      res.status(500).json({ message: "Error al restaurar el backup", code });
     }
+  });
 
-    // Restaurar el backup usando stdin
-    const restore = spawn("docker", [
-      "exec",
-      "-i",
-      CONTAINER_NAME,
-      "psql",
-      "-U",
-      DB_USER,
-      "-d",
-      DB_NAME,
-    ]);
-
-    // Leer el archivo y enviarlo al stdin del proceso
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(restore.stdin);
-
-    restore.on("exit", (code) => {
-      if (code === 0) {
-        res.status(200).json({ message: "Backup restaurado exitosamente" });
-      } else {
-        res.status(500).json({ message: "Error al restaurar el backup", code });
-      }
-    });
-
-    restore.on("error", (error) => {
-      console.error("Error al ejecutar psql:", error);
-      res.status(500).json({ message: "Error al ejecutar psql", error });
-    });
+  restore.on("error", (error) => {
+    console.error("Error al ejecutar psql:", error);
+    res.status(500).json({ message: "Error al ejecutar psql", error });
   });
 };

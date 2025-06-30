@@ -117,7 +117,7 @@ model usuario {
   usuario_pk    Int      @id(map: "usuario_pk") @default(autoincrement())
   fechacreacion DateTime @db.Date
   correo        String   @db.VarChar(30)
-  contrase_a    String   @db.VarChar(20)
+  contrase_a    String   @db.VarChar(100)
   rol           Rol
 }
 
