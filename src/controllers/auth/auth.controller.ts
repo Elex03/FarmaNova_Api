@@ -78,9 +78,7 @@ export const register = async (req: Request, res: Response) => {
       res.status(500).json({ error: "Failed to create user" });
       return;
     }
-    res
-      .status(201)
-      .json({ message: "User created successfully" });
+    res.status(201).json({ message: "User created successfully" });
   } catch (error) {
     console.error("Error creating user:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -127,5 +125,113 @@ export const refreshToken = (req: Request, res: Response) => {
   } catch (error) {
     res.status(401).json({ error: "Invalid or expired refresh token" });
     return;
+  }
+};
+
+export const getUsers = async (_req: Request, res: Response) => {
+  try {
+    const users = await Prismaclient.usuario.findMany({
+      select: {
+        usuario_pk: true,
+        correo: true,
+        rol: true,
+        fechacreacion: true,
+      },
+    });
+
+    const formattedUsers = users.map((user) => ({
+      id: user.usuario_pk,
+      email: user.correo,
+      role: user.rol,
+      createdAt: user.fechacreacion,
+    }));
+
+    res.status(200).json(formattedUsers);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+  const { userId, newPassword } = req.body;
+  if (!userId || !newPassword) {
+    res.status(400).json({ error: "User ID and new password are required" });
+    return;
+  }
+  try {
+    const user = await Prismaclient.usuario.findUnique({
+      where: { usuario_pk: userId },
+    });
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    await Prismaclient.usuario.update({
+      where: { usuario_pk: userId },
+      data: { contrase_a: hashSync(newPassword, 10) },
+    });
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  const { userId } = req.body;
+  if (!userId) {
+    res.status(400).json({ error: "User ID is required" });
+    return;
+  }
+  try {
+    const user = await Prismaclient.usuario.findUnique({
+      where: { usuario_pk: userId },
+    });
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    await Prismaclient.usuario.delete({
+      where: { usuario_pk: userId },
+    });
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  const { userId, email, role } = req.body;
+  if (!userId || !email || !role) {
+    res.status(400).json({ error: "User ID, email, and role are required" });
+    return;
+  }
+  try {
+    const user = await Prismaclient.usuario.findUnique({
+      where: { usuario_pk: userId },
+    });
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    await Prismaclient.usuario.update({
+      where: { usuario_pk: userId },
+      data: { correo: email, rol: role as UserRole },
+    });
+
+    res.status(200).json({ message: "User updated successfully" });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -1,8 +1,12 @@
 import { Router } from "express";
 import {
+  changePassword,
+  deleteUser,
+  getUsers,
   login,
   refreshToken,
   register,
+  updateUser,
 } from "../controllers/auth/auth.controller";
 
 const authRouter = Router();
@@ -124,5 +128,174 @@ authRouter.post("/register", register);
  */
 
 authRouter.post("/refresh-token", refreshToken);
+
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Obtener lista de usuarios
+ *     tags: [Usuarios]
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios obtenida exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   email:
+ *                     type: string
+ *                     example: usuario@example.com
+ *                   role:
+ *                     type: string
+ *                     example: ADMIN
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: 2024-01-01T00:00:00Z
+ *       500:
+ *         description: Error interno del servidor
+ */
+
+
+authRouter.get("/users", getUsers);
+
+/**
+ * @swagger
+ * /users/delete:
+ *   delete:
+ *     summary: Eliminar un usuario
+ *     tags: [Usuarios]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 example: 1
+ *     responses:
+ *       200:
+ *         description: Usuario eliminado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User deleted successfully
+ *       400:
+ *         description: Datos faltantes
+ *       404:
+ *         description: Usuario no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
+
+
+authRouter.put("/users", updateUser);
+
+/**
+ * @swagger
+ * /users/update:
+ *   put:
+ *     summary: Actualizar los datos de un usuario
+ *     tags: [Usuarios]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - email
+ *               - role
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 example: 1
+ *               email:
+ *                 type: string
+ *                 example: nuevoemail@ejemplo.com
+ *               role:
+ *                 type: string
+ *                 enum: [ADMIN, USER]
+ *                 example: USER
+ *     responses:
+ *       200:
+ *         description: Usuario actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User updated successfully
+ *       400:
+ *         description: Datos faltantes
+ *       404:
+ *         description: Usuario no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
+
+
+authRouter.delete("/users", deleteUser);
+
+/**
+ * @swagger
+ * /users/change-password:
+ *   post:
+ *     summary: Cambiar la contraseña de un usuario
+ *     tags: [Usuarios]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - newPassword
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 example: 1
+ *               newPassword:
+ *                 type: string
+ *                 example: nuevaContraseña123
+ *     responses:
+ *       200:
+ *         description: Contraseña cambiada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password changed successfully
+ *       400:
+ *         description: Datos faltantes
+ *       404:
+ *         description: Usuario no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
+
+
+authRouter.post("/users/change-password", changePassword);
 
 export default authRouter;
