@@ -131,7 +131,7 @@ authRouter.post("/refresh-token", refreshToken);
 
 /**
  * @swagger
- * /users:
+ * /apiFarmaNova/auth/users:
  *   get:
  *     summary: Obtener lista de usuarios
  *     tags: [Usuarios]
@@ -164,38 +164,22 @@ authRouter.post("/refresh-token", refreshToken);
 
 
 authRouter.get("/users", getUsers);
-
 /**
  * @swagger
- * /users/delete:
+ * /apiFarmaNova/auth/users/{id}:
  *   delete:
  *     summary: Eliminar un usuario
  *     tags: [Usuarios]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - userId
- *             properties:
- *               userId:
- *                 type: integer
- *                 example: 1
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
  *     responses:
  *       200:
  *         description: Usuario eliminado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: User deleted successfully
- *       400:
- *         description: Datos faltantes
  *       404:
  *         description: Usuario no encontrado
  *       500:
@@ -203,14 +187,21 @@ authRouter.get("/users", getUsers);
  */
 
 
-authRouter.put("/users", updateUser);
 
+authRouter.put("/users/:id", updateUser);
 /**
  * @swagger
- * /users/update:
+ * /apiFarmanova/auth/users/{id}:
  *   put:
  *     summary: Actualizar los datos de un usuario
  *     tags: [Usuarios]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
  *     requestBody:
  *       required: true
  *       content:
@@ -218,13 +209,9 @@ authRouter.put("/users", updateUser);
  *           schema:
  *             type: object
  *             required:
- *               - userId
  *               - email
  *               - role
  *             properties:
- *               userId:
- *                 type: integer
- *                 example: 1
  *               email:
  *                 type: string
  *                 example: nuevoemail@ejemplo.com
@@ -235,14 +222,6 @@ authRouter.put("/users", updateUser);
  *     responses:
  *       200:
  *         description: Usuario actualizado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: User updated successfully
  *       400:
  *         description: Datos faltantes
  *       404:
@@ -252,14 +231,22 @@ authRouter.put("/users", updateUser);
  */
 
 
-authRouter.delete("/users", deleteUser);
+
+authRouter.delete("/users/:id", deleteUser);
 
 /**
  * @swagger
- * /users/change-password:
+ * /apiFarmaNova/auth/users/{id}/change-password:
  *   post:
  *     summary: Cambiar la contraseña de un usuario
  *     tags: [Usuarios]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
  *     requestBody:
  *       required: true
  *       content:
@@ -267,12 +254,8 @@ authRouter.delete("/users", deleteUser);
  *           schema:
  *             type: object
  *             required:
- *               - userId
  *               - newPassword
  *             properties:
- *               userId:
- *                 type: integer
- *                 example: 1
  *               newPassword:
  *                 type: string
  *                 example: nuevaContraseña123
@@ -288,14 +271,13 @@ authRouter.delete("/users", deleteUser);
  *                   type: string
  *                   example: Password changed successfully
  *       400:
- *         description: Datos faltantes
+ *         description: Datos faltantes o inválidos
  *       404:
  *         description: Usuario no encontrado
  *       500:
  *         description: Error interno del servidor
  */
 
-
-authRouter.post("/users/change-password", changePassword);
+authRouter.post("/users/:id/change-password", changePassword);
 
 export default authRouter;

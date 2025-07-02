@@ -154,7 +154,8 @@ export const getUsers = async (_req: Request, res: Response) => {
 };
 
 export const changePassword = async (req: Request, res: Response) => {
-  const { userId, newPassword } = req.body;
+  const userId = Number(req.params.id);
+  const { newPassword } = req.body;
   if (!userId || !newPassword) {
     res.status(400).json({ error: "User ID and new password are required" });
     return;
@@ -182,7 +183,7 @@ export const changePassword = async (req: Request, res: Response) => {
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
-  const { userId } = req.body;
+  const userId = Number(req.params.id);
   if (!userId) {
     res.status(400).json({ error: "User ID is required" });
     return;
@@ -209,7 +210,8 @@ export const deleteUser = async (req: Request, res: Response) => {
 };
 
 export const updateUser = async (req: Request, res: Response) => {
-  const { userId, email, role } = req.body;
+  const userId = Number(req.params.id);
+  const { email, role } = req.body;
   if (!userId || !email || !role) {
     res.status(400).json({ error: "User ID, email, and role are required" });
     return;
