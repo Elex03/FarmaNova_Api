@@ -6,9 +6,277 @@ import { createMakeSales } from "../controllers/makeSales/POST/createMakeSales.c
 
 const generalRouter = Router();
 
+/**
+ * @swagger
+ * /companies:
+ *   post:
+ *     summary: Crea una nueva empresa
+ *     tags:
+ *       - Empresas
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nombre
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *                 example: FarmaNova S.A.
+ *     responses:
+ *       200:
+ *         description: Empresa creada correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: string
+ *               example: Companies was created
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Error interno del servidor
+ */
+
 generalRouter.post('/createCompany', createCompany);
+
+/**
+ * @swagger
+ * /sales:
+ *   get:
+ *     summary: Obtiene medicamentos disponibles para la venta
+ *     tags:
+ *       - Ventas
+ *     responses:
+ *       200:
+ *         description: Lista de medicamentos disponibles obtenida correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: number
+ *                         example: 1
+ *                       descripcion:
+ *                         type: string
+ *                         example: Paracetamol 500mg
+ *                       imagenUrl:
+ *                         type: string
+ *                         example: ./uploads/paracetamol.jpg
+ *                       accionTera:
+ *                         type: string
+ *                         example: Analgésico
+ *                       fabricante:
+ *                         type: string
+ *                         example: FarmaNova S.A.
+ *                       stock:
+ *                         type: number
+ *                         example: 50
+ *                       precioVenta:
+ *                         type: number
+ *                         example: 2.5
+ *                 headers:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       key:
+ *                         type: string
+ *                         example: descripcion
+ *                       header:
+ *                         type: string
+ *                         example: Descripcion
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Error interno del servidor
+ */
+
 generalRouter.get('/getMakeSales', getMakeSales);
+
+/**
+ * @swagger
+ * /items/{code}:
+ *   get:
+ *     summary: Obtiene un medicamento por su código de barra
+ *     tags:
+ *       - Medicamentos
+ *     parameters:
+ *       - in: path
+ *         name: code
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Código de barra del medicamento
+ *         example: 1234567890
+ *     responses:
+ *       200:
+ *         description: Resultado de la búsqueda del medicamento
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     success:
+ *                       type: boolean
+ *                       example: true
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: number
+ *                           example: 1
+ *                         name:
+ *                           type: string
+ *                           example: Paracetamol 500mg
+ *                         stock:
+ *                           type: number
+ *                           example: 50
+ *                         price:
+ *                           type: number
+ *                           example: 2.5
+ *                 - type: object
+ *                   properties:
+ *                     success:
+ *                       type: boolean
+ *                       example: false
+ *                     message:
+ *                       type: string
+ *                       example: Producto no encontrado
+ *                     data:
+ *                       type: "null"
+ *                       nullable: true
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Error interno del servidor
+ */
+
 generalRouter.get('/getItemPerCode/:code', getItemPerCode);
+
+/**
+ * @swagger
+ * /sales:
+ *   post:
+ *     summary: Crea una nueva venta con detalles y actualiza el stock de los medicamentos
+ *     tags:
+ *       - Ventas
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - pagaCon
+ *               - detalle
+ *               - empleado_fk
+ *               - total
+ *             properties:
+ *               pagaCon:
+ *                 type: number
+ *                 example: 100
+ *                 description: Monto con el que paga el cliente
+ *               empleado_fk:
+ *                 type: number
+ *                 example: 1
+ *                 description: ID del empleado que realiza la venta
+ *               total:
+ *                 type: number
+ *                 example: 75.5
+ *                 description: Total de la venta
+ *               detalle:
+ *                 type: array
+ *                 description: Lista de medicamentos vendidos con cantidad
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - medicamento_fk
+ *                     - cantidad
+ *                   properties:
+ *                     medicamento_fk:
+ *                       type: number
+ *                       example: 10
+ *                       description: ID del medicamento vendido
+ *                     cantidad:
+ *                       type: number
+ *                       example: 3
+ *                       description: Cantidad vendida
+ *     responses:
+ *       201:
+ *         description: Venta creada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Venta creada exitosamente
+ *                 ventaId:
+ *                   type: number
+ *                   example: 123
+ *                 total:
+ *                   type: number
+ *                   example: 75.5
+ *                 detalle:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       imageUrl:
+ *                         type: string
+ *                         example: ./uploads/medicamento1.jpg
+ *                       medicamento_fk:
+ *                         type: number
+ *                         example: 10
+ *                       nombre:
+ *                         type: string
+ *                         example: Paracetamol 500mg
+ *                       cantidadVendida:
+ *                         type: number
+ *                         example: 3
+ *                       stockRestante:
+ *                         type: number
+ *                         example: 47
+ *       500:
+ *         description: Error al crear la venta
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Error al crear la venta
+ */
+
 generalRouter.post('/createMakeSales', createMakeSales);
 
 
