@@ -44,7 +44,7 @@ wss.on("connection", (ws) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(4000, () => {
   console.log(`API escuchando en el puerto ${PORT}`);
 });
 

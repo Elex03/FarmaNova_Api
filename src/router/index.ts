@@ -13,7 +13,7 @@ const appRouter = Router();
 
 
 appRouter.use('/auth', authRouter);
-appRouter.use('/inventory', inventoryRouter);
+appRouter.use('/inventory', inventoryRouter);2
 appRouter.use('/distributors', distributorsRouter);
 appRouter.use('/orders', orderRoute);
 appRouter.use('/medicines', medicineRouter);

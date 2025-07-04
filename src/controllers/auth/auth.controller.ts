@@ -136,6 +136,7 @@ export const getUsers = async (_req: Request, res: Response) => {
         correo: true,
         rol: true,
         fechacreacion: true,
+        isActive: true,
       },
     });
 
@@ -144,6 +145,7 @@ export const getUsers = async (_req: Request, res: Response) => {
       email: user.correo,
       role: user.rol,
       createdAt: user.fechacreacion,
+      isActivem: user.isActive,
     }));
 
     res.status(200).json(formattedUsers);
